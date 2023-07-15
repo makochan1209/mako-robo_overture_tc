@@ -40,30 +40,30 @@ serStrDebug = [[0xA5, 0x5A, 0x80, 0x03, 0x01, 0x02, 0x01, 0x02, 0x04], [0xA5, 0x
 def TCDaemon():
     while True: # このループは1回の受信パケット＋データ解析ごと
         # 1パケット受信
-        serBuffStr = twelite.recvTWE(ser)
+        tweResult = twelite.recvTWE(ser)
         
         # データ解析
-        if serBuffStr != []:    # パケットが受信できたとき
-            fromID = tweAddr.index(serBuffStr[4])  # 通信相手（n台目→n-1）
-            recvCom[fromID] = serBuffStr[5]
+        if tweResult.address != "":    # パケットが受信できたとき
+            fromID = tweAddr.index(tweResult.address)  # 通信相手（n台目→n-1）
+            recvCom[fromID] = tweResult.command
             print(str(fromID + 1) + "台目: ")
-            if serBuffStr[5] == 0x00:   # 探索結果報告
+            if tweResult.command == 0x00:   # 探索結果報告
                 print("探索結果報告")
-            elif serBuffStr[5] == 0x01: # 位置到達報告
+            elif tweResult.command == 0x01: # 位置到達報告
                 print("位置到達報告")
-                pos[fromID] = serBuffStr[6]
-            elif serBuffStr[5] == 0x02: # 行動報告
+                pos[fromID] = tweResult.data[0]
+            elif tweResult.command == 0x02: # 行動報告
                 print("行動報告")
-                act[fromID] = serBuffStr[6]
+                act[fromID] = tweResult.data[0]
                 print("行動内容: " + hex(act[fromID]))
-            elif serBuffStr[5] == 0x03: # ボール有無報告
+            elif tweResult.command == 0x03: # ボール有無報告
                 print("ボール有無報告")
-                ballCaught[fromID] = True if serBuffStr[6] == 0x01 else False
-            elif serBuffStr[5] == 0x20: # 行動指示要求
+                ballCaught[fromID] = True if tweResult.data[0] == 0x01 else False
+            elif tweResult.command == 0x20: # 行動指示要求
                 print("行動指示要求")
-            elif serBuffStr[5] == 0x21: # 許可要求
+            elif tweResult.command == 0x21: # 許可要求
                 print("許可要求")
-            elif serBuffStr[5] == 0x30: # 通信成立報告
+            elif tweResult.command == 0x30: # 通信成立報告
                 print("通信成立報告")
             print("")
     
@@ -149,19 +149,19 @@ def connect():
             twelite.sendTWE(ser, 0x78, 0x70, i + 1)
             c = 0
             while True:
-                serBuffStr = twelite.recvTWE(ser)
+                tweResult = twelite.recvTWE(ser)
                 # データ解析をするようにする
-                if serBuffStr != []:    # パケットが受信できたとき
-                    if serBuffStr[5] == 0x30: # 通信成立報告
-                        if serBuffStr[6] == i + 1:
+                if tweResult.address != "":    # パケットが受信できたとき
+                    if tweResult.command == 0x30: # 通信成立報告
+                        if tweResult.data[0] == i + 1:
                             print("Connected: " + str(i + 1))
-                            print("TWELITE address: " + hex(serBuffStr[4]))
+                            print("TWELITE address: " + hex(tweResult.address))
                             print()
                             connectStatus[i] = True
-                            tweAddr[i] = serBuffStr[4]
+                            tweAddr[i] = tweResult.address
                             break
                         else:
-                            print("Failed: " + str(i + 1) + "Received: " + str(serBuffStr[6]))
+                            print("Failed: " + str(i + 1) + "Received: " + str(tweResult.data[0]))
                             print()
                             break
                 time.sleep(0.01)
