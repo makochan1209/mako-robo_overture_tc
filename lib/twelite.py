@@ -75,7 +75,7 @@ def sendTWE(ser, toID, command, data):
     """
     result = False
     sendPacket = [0xA5, 0x5A, 0x80, 0x03, toID, command]
-    if type(data) is complex:
+    if isinstance(data, list):
         sendPacket[3] = 0x02 + len(data)
         # sendPacket.extend([int(s, 0) for s in data])
         sendPacket.extend(data)
