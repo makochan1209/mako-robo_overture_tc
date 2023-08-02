@@ -19,7 +19,7 @@ import twelite
 GRID_WIDTH = 40
 GRID_HEIGHT = 10
 
-ROBOT_NUM = 6    # ロボットの台数（1台から6台に対応、2台と6台のみ動作確認）
+ROBOT_NUM = 2    # ロボットの台数（1台から6台に対応、2台と6台のみ動作確認）
 
 tweAddr = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06]  # 各機のTWELITEのアドレス（TWELITE交換に対応）
 
