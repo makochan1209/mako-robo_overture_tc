@@ -22,7 +22,7 @@ def twe_uart_setting(ser):
     ser.parity = serial.PARITY_NONE
     ser.bytesize = serial.EIGHTBITS
     ser.stopbits = serial.STOPBITS_ONE
-    ser.timeout = 0.01
+    ser.timeout = None
 
 def twe_serial_ports_detect():
     """
@@ -122,25 +122,26 @@ def recvTWE(ser, responcePacket = False):
     result = Sample()
     
     # データ受信
-    if ser.in_waiting > 0: # データが来ているとき。パケット受信完了でbreak
-        buffByteArray = ser.read_until("\x04") # EOTまで読み込み
-        serBuffStr = [val for val in buffByteArray]
+    while ser.in_waiting > 0: # データが来ているか・またはデバッグモードのとき。このループは1バイトごと、パケット受信完了でbreak
+        buff = struct.unpack("<B", ser.read())[0]
         
-        print("Packet Received")
-        print("Recieved Data:")
-        print([hex(i) for i in serBuffStr])
-        if serBuffStr[len(serBuffStr) - 1] == 0x04: # EOTが来ているとき
-            print("EOT OK")
-            for i in range(4, len(serBuffStr) - 2): # CDの計算
-                cdBuff = cdBuff ^ serBuffStr[i]
-            if cdBuff == serBuffStr[len(serBuffStr) - 2]:   # CDが正しいとき
-                print("CD OK: " + hex(cdBuff))
-            else:   # CDが正しくないとき
-                print("CD NG, Expected: " + hex(cdBuff) + ", Received: " + hex(serBuffStr[len(serBuffStr) - 2]))
-        else:
-            print("EOT NG")
-            serBuffStr = []
-        
+        serBuffStr.append(buff)
+        if len(serBuffStr) > 4:    # データの範囲
+            if len(serBuffStr) <= 4 + serBuffStr[3]:    # データ終了まで
+                cdBuff = cdBuff ^ buff   # CD計算
+            elif len(serBuffStr) == 4 + serBuffStr[3] + 2:    # EOTまで終了
+                print("Packet Received")
+                print("Recieved Data:")
+                print([hex(i) for i in serBuffStr])
+                if serBuffStr[len(serBuffStr) - 1] == 0x04: # EOTチェック
+                    print("EOT OK")
+                    if cdBuff == serBuffStr[len(serBuffStr) - 2]:
+                        print("CD OK")
+                    else:
+                        print("CD NG, Expected: " + hex(cdBuff) + ", Received: " + hex(serBuffStr[len(serBuffStr) - 2]))
+                else:
+                    print("EOT NG")
+                break
     if serBuffStr != [] and len(serBuffStr) < 8:    # パケットが短すぎる場合は破棄
         serBuffStr = []
         print("Packet too short")
