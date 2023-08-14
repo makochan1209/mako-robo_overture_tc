@@ -28,46 +28,6 @@ def initTWE(serInit):
     ser.stopbits = serial.STOPBITS_ONE
     ser.timeout = None
 
-def twe_serial_ports_detect():
-    """
-    TWELITEに接続されているシリアルポートを自動で検出する関数。返り値はポート名。
-    """
-    global ser
-    result = ""
-    if sys.platform.startswith('win') or sys.platform.startswith('linux'):
-        suggestPorts = []
-        ports = list(serial.tools.list_ports.comports())
-        for p in ports:
-            if (p.vid == 0x0403 and (p.pid == 0x6001 or p.pid == 0x6015)) or p.device == '/dev/serial0':    # TWE-Lite-R, Raspberry Pi => GPIO UART
-                ser_ = serial.Serial(p.device)
-                initTWE(ser_)
-                sendResult = sendTWE(0x00, 0x00, 0x00)
-                if sendResult:
-                    suggestPorts.append(p.device)
-        ser = None
-        
-        if len(suggestPorts) == 0:
-            print('TWELITE not found')
-        
-        else:
-            if len(suggestPorts) == 1:
-                print(suggestPorts[0])
-                result = suggestPorts[0]
-            else:
-                i = 1
-                for port in suggestPorts:
-                    print("i: ", port)
-                    i += 1
-                print("Enter the number or the port name you want to use")
-                result = input()
-                if result.isdigit():
-                    result = suggestPorts[int(result) - 1]
-        print("Port " + result + " is used")
-            
-    else:
-        print('Unsupported platform')
-    return result
-
 def sendTWE(toID, command, data):
     """
     TWEから他のTWEへデータを送信する関数。返り値は成功したかどうかの真偽値。
@@ -165,4 +125,44 @@ def recvTWE(responcePacket = False):
         result.address = ""
         result.command = ""
         result.data = []
+    return result
+
+def twe_serial_ports_detect():
+    """
+    TWELITEに接続されているシリアルポートを自動で検出する関数。返り値はポート名。
+    """
+    global ser
+    result = ""
+    if sys.platform.startswith('win') or sys.platform.startswith('linux'):
+        suggestPorts = []
+        ports = list(serial.tools.list_ports.comports())
+        for p in ports:
+            if (p.vid == 0x0403 and (p.pid == 0x6001 or p.pid == 0x6015)) or p.device == '/dev/serial0':    # TWE-Lite-R, Raspberry Pi => GPIO UART
+                ser_ = serial.Serial(p.device)
+                initTWE(ser_)
+                sendResult = sendTWE(0x00, 0x00, 0x00)
+                if sendResult:
+                    suggestPorts.append(p.device)
+        ser = None
+        
+        if len(suggestPorts) == 0:
+            print('TWELITE not found')
+        
+        else:
+            if len(suggestPorts) == 1:
+                print(suggestPorts[0])
+                result = suggestPorts[0]
+            else:
+                i = 1
+                for port in suggestPorts:
+                    print("i: ", port)
+                    i += 1
+                print("Enter the number or the port name you want to use")
+                result = input()
+                if result.isdigit():
+                    result = suggestPorts[int(result) - 1]
+        print("Port " + result + " is used")
+            
+    else:
+        print('Unsupported platform')
     return result
