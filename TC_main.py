@@ -29,8 +29,7 @@ twe = None
 ser = None
 
 def init():
-    global ser
-    global twe
+    global ser, twe
     # 初期化
     use_port = twelite.twe_serial_ports_detect()
 
