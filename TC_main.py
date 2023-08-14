@@ -67,7 +67,7 @@ def TCDaemon():
 # ボタン操作からの管制への反映
 def compStart():
     print("start")
-    twelite.sendTWE(ser, tweAddr[0], 0x71, [0x00]) # 1台目に競技開始を通知
+    twelite.sendTWE(tweAddr[0], 0x71, [0x00]) # 1台目に競技開始を通知
 
 def compEmgStop():
     print("emgStop")
@@ -142,7 +142,7 @@ def connect():
         if not connectStatus[i]:    # 未接続のとき
             print("Connecting: " + str(i + 1))
             timeData = time.localtime()
-            twelite.sendTWE(ser, 0x78, 0x70, [i + 1, timeData.tm_year - 2000, timeData.tm_mon, timeData.tm_mday, timeData.tm_hour, timeData.tm_min, timeData.tm_sec])
+            twelite.sendTWE(0x78, 0x70, [i + 1, timeData.tm_year - 2000, timeData.tm_mon, timeData.tm_mday, timeData.tm_hour, timeData.tm_min, timeData.tm_sec])
             c = 0
             while True:
                 tweResult = twelite.recvTWE(ser)
@@ -198,7 +198,7 @@ def keyPress(event):
 use_port = twelite.twe_serial_ports_detect()
 
 ser = serial.Serial(use_port)
-twelite.twe_uart_setting(ser)
+twelite.initTWE(ser)
 
 # ウィンドウの定義
 mainWindow = tk.Tk()

@@ -6,11 +6,12 @@ import time
 import serial.tools.list_ports
 
 class Sample: pass # 空のクラス
+ser = None
 
 # [0xA5, 0x5A, 0x80, "Length", "Data", "CD", 0x04]の形式で受信
 # "Data": 0x0*（送信元）, Command, Data
 
-def twe_uart_setting(ser):
+def initTWE(serInit):
     """
     TWELITEに接続できるUART規格にシリアル通信オブジェクトを設定する関数。
 
@@ -18,6 +19,9 @@ def twe_uart_setting(ser):
     ----------
     ser : シリアル通信オブジェクト
     """
+    global ser
+    ser = serInit
+    
     ser.baudrate = 115200
     ser.parity = serial.PARITY_NONE
     ser.bytesize = serial.EIGHTBITS
@@ -28,17 +32,19 @@ def twe_serial_ports_detect():
     """
     TWELITEに接続されているシリアルポートを自動で検出する関数。返り値はポート名。
     """
+    global ser
     result = ""
     if sys.platform.startswith('win') or sys.platform.startswith('linux'):
         suggestPorts = []
         ports = list(serial.tools.list_ports.comports())
         for p in ports:
             if (p.vid == 0x0403 and (p.pid == 0x6001 or p.pid == 0x6015)) or p.device == '/dev/serial0':    # TWE-Lite-R, Raspberry Pi => GPIO UART
-                ser = serial.Serial(p.device)
-                twe_uart_setting(ser)
-                sendResult = sendTWE(ser, 0x00, 0x00, 0x00)
+                ser_ = serial.Serial(p.device)
+                initTWE(ser_)
+                sendResult = sendTWE(0x00, 0x00, 0x00)
                 if sendResult:
                     suggestPorts.append(p.device)
+        ser = None
         
         if len(suggestPorts) == 0:
             print('TWELITE not found')
@@ -62,7 +68,7 @@ def twe_serial_ports_detect():
         print('Unsupported platform')
     return result
 
-def sendTWE(ser, toID, command, data):
+def sendTWE(toID, command, data):
     """
     TWEから他のTWEへデータを送信する関数。返り値は成功したかどうかの真偽値。
 
@@ -93,7 +99,7 @@ def sendTWE(ser, toID, command, data):
     ser.write(b''.join([struct.pack("<B", val) for val in sendPacket]))
 
     for i in range(0, 20):  # 1秒待つ
-        tweResult = recvTWE(ser, True)
+        tweResult = recvTWE(True)
         if tweResult.address != "":
             if tweResult.address == 0xdb:   # リスポンスパケット
                 result = True
@@ -101,7 +107,7 @@ def sendTWE(ser, toID, command, data):
         time.sleep(0.05)
     return result
         
-def recvTWE(ser, responcePacket = False):
+def recvTWE(responcePacket = False):
     """
     TWEが受信したデータを返す関数。返り値は受信したデータのオブジェクト。
 
