@@ -14,7 +14,7 @@ python -m venv venv_overture_tc
 
 以下は仮想環境ディレクトリ（```venv_overture_tc```）内で行う。
 
-```requirements.txt```は```Scripts```ディレクトリ内に配置してモジュールインストール。
+仮想環境起動後に、```requirements.txt```は```Scripts```ディレクトリ内に配置してモジュールインストール。
 ```
 pip install -r requirements.txt
 ```
