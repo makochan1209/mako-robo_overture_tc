@@ -1,16 +1,10 @@
 import tkinter as tk
 
 import time
-
-import datetime
 # import subprocess
 
 import serial
-import struct
 import threading
-import random
-import sys
-import glob
 
 import serial.tools.list_ports
 import twelite
@@ -19,7 +13,7 @@ import twelite
 GRID_WIDTH = 40
 GRID_HEIGHT = 10
 
-ROBOT_NUM = 6    # ロボットの台数（1台から6台に対応、2台と6台のみ動作確認）
+ROBOT_NUM = 2    # ロボットの台数（1台から6台に対応、2台と6台のみ動作確認）
 
 tweAddr = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06]  # 各機のTWELITEのアドレス（TWELITE交換に対応）
 
@@ -31,6 +25,18 @@ recvCom = [0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6] # ロボットの受信通信コ�
 transCom = [0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6] # ロボットの送信通信コマンド
 connectStatus = [False, False, False, False, False, False]  # 接続できているか
 
+twe = None
+ser = None
+
+def init():
+    global ser
+    global twe
+    # 初期化
+    use_port = twelite.twe_serial_ports_detect()
+
+    ser = serial.Serial(use_port)
+    twe = twelite.TWELITE(ser)
+
 # [0xA5, 0x5A, 0x80, "Length", "Data", "CD", 0x04]の形式で受信
 # "Data": 0x0*（送信元）, Command, Data
 serStrDebug = [[0xA5, 0x5A, 0x80, 0x03, 0x01, 0x02, 0x01, 0x02, 0x04], [0xA5, 0x5A, 0x80, 0x03, 0x01, 0x02, 0x04, 0x07, 0x04], [0xA5, 0x5A, 0x80, 0x03, 0x01, 0x21, 0x01, 0x21, 0x04]]
@@ -40,7 +46,7 @@ serStrDebug = [[0xA5, 0x5A, 0x80, 0x03, 0x01, 0x02, 0x01, 0x02, 0x04], [0xA5, 0x
 def TCDaemon():
     while True: # このループは1回の受信パケット＋データ解析ごと
         # 1パケット受信
-        tweResult = twelite.recvTWE(ser)
+        tweResult = twe.recvTWE(ser)
         
         # データ解析
         if tweResult.address != "":    # パケットが受信できたとき
@@ -73,13 +79,14 @@ def TCDaemon():
 # ボタン操作からの管制への反映
 def compStart():
     print("start")
+    twe.sendTWE(tweAddr[0], 0x71, [0x00]) # 1台目に競技開始を通知
 
 def compEmgStop():
     print("emgStop")
 
 # ウィンドウ制御（上の情報を表示する）
 def windowDaemon():
-    labelTime.configure(text=datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S'))
+    labelTime.configure(text=time.strftime('%Y/%m/%d %H:%M:%S'))
 
     configureTextBuf = ""
     for i in range(ROBOT_NUM):
@@ -146,10 +153,11 @@ def connect():
     for i in range(ROBOT_NUM):  # 1台ずつ接続
         if not connectStatus[i]:    # 未接続のとき
             print("Connecting: " + str(i + 1))
-            twelite.sendTWE(ser, 0x78, 0x70, i + 1)
+            timeData = time.localtime()
+            twe.sendTWE(0x78, 0x70, [i + 1, timeData.tm_year - 2000, timeData.tm_mon, timeData.tm_mday, timeData.tm_hour, timeData.tm_min, timeData.tm_sec])
             c = 0
             while True:
-                tweResult = twelite.recvTWE(ser)
+                tweResult = twe.recvTWE()
                 # データ解析をするようにする
                 if tweResult.address != "":    # パケットが受信できたとき
                     if tweResult.command == 0x30: # 通信成立報告
@@ -195,14 +203,7 @@ def keyPress(event):
         exitTCApp()
 
 # 以下メインルーチン
-
-# 初期化
-
-# シリアル通信（TWE-Lite）
-use_port = twelite.twe_serial_ports_detect()
-
-ser = serial.Serial(use_port)
-twelite.twe_uart_setting(ser)
+init()
 
 # ウィンドウの定義
 mainWindow = tk.Tk()
