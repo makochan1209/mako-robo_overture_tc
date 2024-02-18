@@ -5,6 +5,7 @@ https://qiita.com/TooFuu/items/9524198fab5b2ebf46a3
 ## 使い方
 https://qiita.com/bluepost59/items/c13c88a9387e28189d7b
 https://qiita.com/fiftystorm36/items/b2fd47cf32c7694adc2e
+https://qiita.com/fiftystorm36/items/b2fd47cf32c7694adc2e
 
 ### 環境構築
 ```
@@ -27,7 +28,7 @@ deactivate
 
 Linux
 ```
-Scripts/activate
+. ./bin/activate
 deactivate
 ```
 
