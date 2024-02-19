@@ -86,9 +86,10 @@ def compEmgStop():
     print("emgStop")
     twe.sendTWE(tweAddr[0], 0x71, [0xff])
 
-# ウィンドウ制御（上の情報を表示する）
-def windowDaemon():
-    labelTime.configure(text=time.strftime('%Y/%m/%d %H:%M:%S'))
+# 画面制御（上の情報を表示する）
+def screenDaemon():
+    if WINDOW_MODE:
+        labelTime.configure(text=time.strftime('%Y/%m/%d %H:%M:%S'))
 
     configureTextBuf = ""
     for i in range(ROBOT_NUM):
@@ -133,20 +134,27 @@ def windowDaemon():
         else:
             configureTextBuf = str(i + 1) + "号機\n\n" + "接続状態: " + "未接続"
 
-        if (i == 0):
-            labelR1.configure(text=configureTextBuf)
-        elif (i == 1):
-            labelR2.configure(text=configureTextBuf)
-        elif (i == 2):
-            labelR3.configure(text=configureTextBuf)
-        elif (i == 3):
-            labelR4.configure(text=configureTextBuf)
-        elif (i == 4):
-            labelR5.configure(text=configureTextBuf)
-        elif (i == 5):
-            labelR6.configure(text=configureTextBuf)
+        if WINDOW_MODE:
+            if (i == 0):
+                labelR1.configure(text=configureTextBuf)
+            elif (i == 1):
+                labelR2.configure(text=configureTextBuf)
+            elif (i == 2):
+                labelR3.configure(text=configureTextBuf)
+            elif (i == 3):
+                labelR4.configure(text=configureTextBuf)
+            elif (i == 4):
+                labelR5.configure(text=configureTextBuf)
+            elif (i == 5):
+                labelR6.configure(text=configureTextBuf)
+        else:
+            print(configureTextBuf)
 
-    mainWindow.after(50, windowDaemon)
+    if WINDOW_MODE:
+        mainWindow.after(50, screenDaemon)
+    else:
+        time.sleep(1)
+        screenDaemon()
 
 # ロボット本体との接続
 def connect():
@@ -185,7 +193,8 @@ def connect():
 
 def exitTCApp():
     ser.close()
-    mainWindow.destroy()
+    if WINDOW_MODE:
+        mainWindow.destroy()
 
 def keyPress(event):
     # Enterのとき
@@ -204,22 +213,29 @@ def keyPress(event):
 # 以下メインルーチン
 init()
 
-# ウィンドウの定義
-mainWindow = tk.Tk()
-mainWindow.title ('Main Window')
-mainWindow.geometry('800x800')
+# 管制プログラムの起動（受信した信号に対して送信するパッシブなものなので常に動かす）
+threadTC = threading.Thread(target=TCDaemon, daemon=True)
+threadTC.start()
+i = 0
 
-# グリッドの定義
-mainFrame = tk.Frame(mainWindow)
-mainFrame.grid(column=0, row=0)
-
+# ウィンドウ表示モード
 if WINDOW_MODE:
+    # ウィンドウの定義
+    mainWindow = tk.Tk()
+    mainWindow.title ('Main Window')
+    mainWindow.geometry('800x800')
+
+    # グリッドの定義
+    mainFrame = tk.Frame(mainWindow)
+    mainFrame.grid(column=0, row=0)
+
     # タイトル
     labelTitle = tk.Label(mainWindow, text='Ascella by Team mako-robo\n管制ウィンドウ')
     labelTitle.grid(row=0,column=0,columnspan=2)
     labelTime = tk.Label(mainWindow, text='')
     labelTime.grid(row=1,column=0,columnspan=2)
 
+    # ウィンドウの構成
     labelR1 = tk.Label(mainWindow, text='1号機', anchor=tk.N, width=GRID_WIDTH, height=GRID_HEIGHT)
     labelR1.grid(row=2,column=0)
     if ROBOT_NUM >= 2:
@@ -247,13 +263,30 @@ if WINDOW_MODE:
     buttonExit = tk.Button(mainWindow, text = "プログラム終了 (Num 9)", command = exitTCApp)
     buttonExit.grid(row=10,column=0,columnspan=2)
 
+    # キー待機部分
     mainWindow.bind("<KeyPress>", keyPress)
 
-    threadWindow = threading.Thread(target=windowDaemon, daemon=True)
+    # 表示更新スレッド開始
+    threadWindow = threading.Thread(target=screenDaemon, daemon=True)
     threadWindow.start()
+    mainWindow.mainloop()
 
-
-threadTC = threading.Thread(target=TCDaemon, daemon=True)
-threadTC.start()
-i = 0
-mainWindow.mainloop()
+# ターミナルモード
+else:
+    threadTerminal = threading.Thread(target=screenDaemon, daemon=True)
+    threadTerminal.start()
+    # キー待機部分
+    while True:
+        print("0: 競技開始、1: 通信接続、2: 全ロボット緊急停止、9: プログラム終了")
+        a = input("機体への送信信号：")
+        if a == "0":
+            compStart()
+        elif a == "1":
+            connect()
+        elif a == "2":
+            compEmgStop()
+        elif a == "9":
+            exitTCApp()
+        else:
+            print("無効な入力です")
+        time.sleep(0.5)
