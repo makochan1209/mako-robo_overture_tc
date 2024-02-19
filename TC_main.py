@@ -9,6 +9,8 @@ import threading
 import serial.tools.list_ports
 import twelite
 
+WINDOW_MODE = True  # ウィンドウモードかどうか
+
 # グリッドの大きさ
 GRID_WIDTH = 40
 GRID_HEIGHT = 10
@@ -72,7 +74,7 @@ def TCDaemon():
                 print("通信成立報告")
             print("")
     
-        time.sleep(0.5) # デバッグモードは実際に読んでいないので待機時間挟む
+        time.sleep(0.2)
 
 
 # ボタン操作からの管制への反映
@@ -82,7 +84,7 @@ def compStart():
 
 def compEmgStop():
     print("emgStop")
-
+    
 # ウィンドウ制御（上の情報を表示する）
 def windowDaemon():
     labelTime.configure(text=time.strftime('%Y/%m/%d %H:%M:%S'))
@@ -179,9 +181,6 @@ def connect():
                     break
 
     buttonStart.grid(row=6,column=0,columnspan=2)
-    
-    if threadTC.is_alive() == False:    # 通信スレッドが動いていないとき（初回）
-        threadTC.start()
 
 def exitTCApp():
     ser.close()
@@ -213,43 +212,47 @@ mainWindow.geometry('800x800')
 mainFrame = tk.Frame(mainWindow)
 mainFrame.grid(column=0, row=0)
 
-# タイトル
-labelTitle = tk.Label(mainWindow, text='Ascella by Team mako-robo\n管制ウィンドウ')
-labelTitle.grid(row=0,column=0,columnspan=2)
-labelTime = tk.Label(mainWindow, text='')
-labelTime.grid(row=1,column=0,columnspan=2)
+if WINDOW_MODE:
+    # タイトル
+    labelTitle = tk.Label(mainWindow, text='Ascella by Team mako-robo\n管制ウィンドウ')
+    labelTitle.grid(row=0,column=0,columnspan=2)
+    labelTime = tk.Label(mainWindow, text='')
+    labelTime.grid(row=1,column=0,columnspan=2)
 
-labelR1 = tk.Label(mainWindow, text='1号機', anchor=tk.N, width=GRID_WIDTH, height=GRID_HEIGHT)
-labelR1.grid(row=2,column=0)
-if ROBOT_NUM >= 2:
-    labelR2 = tk.Label(mainWindow, text='2号機', anchor=tk.N, width=GRID_WIDTH, height=GRID_HEIGHT)
-    labelR2.grid(row=2,column=1)
-if ROBOT_NUM >= 3:
-    labelR3 = tk.Label(mainWindow, text='3号機', anchor=tk.N, width=GRID_WIDTH, height=GRID_HEIGHT)
-    labelR3.grid(row=3,column=0)
-if ROBOT_NUM >= 4:
-    labelR4 = tk.Label(mainWindow, text='4号機', anchor=tk.N, width=GRID_WIDTH, height=GRID_HEIGHT)
-    labelR4.grid(row=3,column=1)
-if ROBOT_NUM >= 5:
-    labelR5 = tk.Label(mainWindow, text='5号機', anchor=tk.N, width=GRID_WIDTH, height=GRID_HEIGHT)
-    labelR5.grid(row=4,column=0)
-if ROBOT_NUM >= 6:
-    labelR6 = tk.Label(mainWindow, text='6号機', anchor=tk.N, width=GRID_WIDTH, height=GRID_HEIGHT)
-    labelR6.grid(row=4,column=1)
+    labelR1 = tk.Label(mainWindow, text='1号機', anchor=tk.N, width=GRID_WIDTH, height=GRID_HEIGHT)
+    labelR1.grid(row=2,column=0)
+    if ROBOT_NUM >= 2:
+        labelR2 = tk.Label(mainWindow, text='2号機', anchor=tk.N, width=GRID_WIDTH, height=GRID_HEIGHT)
+        labelR2.grid(row=2,column=1)
+    if ROBOT_NUM >= 3:
+        labelR3 = tk.Label(mainWindow, text='3号機', anchor=tk.N, width=GRID_WIDTH, height=GRID_HEIGHT)
+        labelR3.grid(row=3,column=0)
+    if ROBOT_NUM >= 4:
+        labelR4 = tk.Label(mainWindow, text='4号機', anchor=tk.N, width=GRID_WIDTH, height=GRID_HEIGHT)
+        labelR4.grid(row=3,column=1)
+    if ROBOT_NUM >= 5:
+        labelR5 = tk.Label(mainWindow, text='5号機', anchor=tk.N, width=GRID_WIDTH, height=GRID_HEIGHT)
+        labelR5.grid(row=4,column=0)
+    if ROBOT_NUM >= 6:
+        labelR6 = tk.Label(mainWindow, text='6号機', anchor=tk.N, width=GRID_WIDTH, height=GRID_HEIGHT)
+        labelR6.grid(row=4,column=1)
 
-buttonConnect = tk.Button(mainWindow, text = "通信接続 (Num 1)", command = connect)
-buttonConnect.grid(row=5,column=0,columnspan=2)
+    buttonConnect = tk.Button(mainWindow, text = "通信接続 (Num 1)", command = connect)
+    buttonConnect.grid(row=5,column=0,columnspan=2)
 
-buttonStart = tk.Button(mainWindow, text = "競技開始 (Enter)", command = compStart)
-buttonEmgStop = tk.Button(mainWindow, text = "全ロボット緊急停止 (Num 2)", command = compEmgStop)
+    buttonStart = tk.Button(mainWindow, text = "競技開始 (Enter)", command = compStart)
+    buttonEmgStop = tk.Button(mainWindow, text = "全ロボット緊急停止 (Num 2)", command = compEmgStop)
 
-buttonExit = tk.Button(mainWindow, text = "プログラム終了 (Num 9)", command = exitTCApp)
-buttonExit.grid(row=10,column=0,columnspan=2)
+    buttonExit = tk.Button(mainWindow, text = "プログラム終了 (Num 9)", command = exitTCApp)
+    buttonExit.grid(row=10,column=0,columnspan=2)
 
-mainWindow.bind("<KeyPress>", keyPress)
+    mainWindow.bind("<KeyPress>", keyPress)
 
-threadWindow = threading.Thread(target=windowDaemon, daemon=True)
+    threadWindow = threading.Thread(target=windowDaemon, daemon=True)
+    threadWindow.start()
+
+
 threadTC = threading.Thread(target=TCDaemon, daemon=True)
-threadWindow.start()
+threadTC.start()
 i = 0
 mainWindow.mainloop()
