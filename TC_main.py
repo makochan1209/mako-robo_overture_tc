@@ -17,15 +17,20 @@ GRID_HEIGHT = 10
 
 ROBOT_NUM = 2    # ロボットの台数（1台から6台に対応、2台と6台のみ動作確認）
 
-tweAddr = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06]  # 各機のTWELITEのアドレス（TWELITE交換に対応）
+tweAddr = []  # 各機のTWELITEのアドレス（TWELITE交換に対応）
 
-pos = [0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6] # ロボットの位置
-destPos = [0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6] # ロボットの行き先
-act = [0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6] # ロボットの作業内容
-ballCaught = [False, False, False, False, False, False] # ボール保持状況
-recvCom = [0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6] # ロボットの受信通信コマンド
-transCom = [0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6] # ロボットの送信通信コマンド
-connectStatus = [False, False, False, False, False, False]  # 接続できているか
+pos = [] # ロボットの位置
+destPos = [] # ロボットの行き先
+act = [] # ロボットの作業内容
+request = [] # ロボットの直近要求内容
+requestDestPos = [] # ロボットの直近要求内容における目的地
+permit = [] # ロボットの直近許可内容
+ballStatus = [] # ボール取得個数、ロボットごとの配列で、その中の各値は連想配列（r, g, b）で管理
+connectStatus = []  # 接続できているか
+
+actText = ["待機中", "走行中", "ボール探索中（未発見、LiDARなし）", "ボール探索中（未発見、LiDARあり）", "ボール探索中（発見済、LiDARなし）", "ボール探索中（発見済、LiDARあり）", "ボールキャッチ", "ボールシュート"]
+requestText = ["", "移動許可要求", "", "ボール探索（未発見）LiDAR照射許可要求", "", "ボール探索（発見済）LiDAR照射許可要求", "ボールキャッチ許可要求", "ボールシュート許可要求"]
+permitText = ["", "移動許可", "", "ボール探索（未発見）LiDAR照射許可", "", "ボール探索（発見済）LiDAR照射許可", "ボールキャッチ許可", "ボールシュート許可"]
 
 twe = None
 ser = None
@@ -38,9 +43,19 @@ def init():
     ser = serial.Serial(use_port)
     twe = twelite.TWELITE(ser)
 
+    for i in range(ROBOT_NUM):
+        tweAddr[i] = 0x01 + i   # 初期値
+        pos[i] = 0xff
+        destPos[i] = 0xff
+        act[i] = 0xff
+        request[i] = 0xff
+        requestDestPos[i] = 0xff
+        permit[i] = 0xff
+        ballStatus[i] = {"r": 0, "y": 0, "b": 0}
+        connectStatus[i] = False
+
 # [0xA5, 0x5A, 0x80, "Length", "Data", "CD", 0x04]の形式で受信
 # "Data": 0x0*（送信元）, Command, Data
-serStrDebug = [[0xA5, 0x5A, 0x80, 0x03, 0x01, 0x02, 0x01, 0x02, 0x04], [0xA5, 0x5A, 0x80, 0x03, 0x01, 0x02, 0x04, 0x07, 0x04], [0xA5, 0x5A, 0x80, 0x03, 0x01, 0x21, 0x01, 0x21, 0x04]]
 # ボール探索開始, ボールシュート完了, LiDAR露光許可要求
 
 # 管制・受信（受信したら指示を返信（送信）する形、常に起動している）
@@ -52,23 +67,54 @@ def TCDaemon():
         # データ解析
         if tweResult.address != "":    # パケットが受信できたとき
             fromID = tweAddr.index(tweResult.address)  # 通信相手（n台目→n-1）
-            recvCom[fromID] = tweResult.command
             print(str(fromID + 1) + "台目: ")
             if tweResult.command == 0x00:   # 探索結果報告
-                print("探索結果報告")
-            elif tweResult.command == 0x01: # 位置到達報告
-                print("位置到達報告")
-                pos[fromID] = tweResult.data[0]
+                ballStatus[fromID]["r"] = tweResult.data[0]
+                ballStatus[fromID]["y"] = tweResult.data[1]
+                ballStatus[fromID]["b"] = tweResult.data[2]
+                print("探索結果報告：赤" + str(ballStatus[fromID]["r"]) + "個、黄" + str(ballStatus[fromID]["y"]) + "個、青" + str(ballStatus[fromID]["b"]) + "個")
             elif tweResult.command == 0x02: # 行動報告
-                print("行動報告")
                 act[fromID] = tweResult.data[0]
-                print("行動内容: " + hex(act[fromID]))
-            elif tweResult.command == 0x20: # 行動指示要求
-                print("行動指示要求")
-            elif tweResult.command == 0x21: # 許可要求
+                print("行動報告")
+                print("行動内容: " + hex(act[fromID])) + " (" + actText[act[fromID]] + ")"
+                if act[fromID] == 0x00:
+                    pos[fromID] = tweResult.data[1]
+                    print("現在地: " + hex(pos[fromID]))
+                elif act[fromID] == 0x01:
+                    pos[fromID] = tweResult.data[1]
+                    print("現在地: " + hex(pos[fromID]))
+                    destPos[fromID] = tweResult.data[2]
+                    print("目的地: " + hex(destPos[fromID]))
+
+            elif tweResult.command == 0x20: # 許可要求。ここで管制や許可を行う、管制処理はすべてここ。
+                request[fromID] = tweResult.data[0]
                 print("許可要求")
-            elif tweResult.command == 0x30: # 通信成立報告
-                print("通信成立報告")
+                print("要求内容: " + hex(request[fromID]) + " (" + requestText[request[fromID]] + ")")
+
+                if request[fromID] == 0x01: # 移動許可要求
+                    requestDestPos[fromID] = tweResult.data[1]
+                    print("移動許可要求の目的地: " + hex(requestDestPos[fromID]))
+
+                    permit[fromID] = 0x01
+
+                    # ここで許可を出すかどうかを判断する（どうやって待機するか…）
+                    destPos[fromID] = requestDestPos[fromID]    # ゴールゾーンでどのゴールに行くかが異なる場合はここで仕分ける必要あり
+                    requestDestPos[fromID] = 0xff
+                    print("移動許可の目的地: " + hex(destPos[fromID]))
+                    twe.sendTWE(tweAddr[fromID], 0x50, [permit[fromID], destPos[fromID]]) # 許可を返信
+                elif request[fromID] == 0x03 or request[fromID] == 0x05: # ボール探索LiDAR照射許可要求
+                    permit[fromID] = 0x05
+                    # ここで許可を出すかどうかを判断する（どうやって待機するか…）
+                    twe.sendTWE(tweAddr[fromID], 0x50, [permit[fromID]]) # 許可を返信
+                elif request[fromID] == 0x06:   # ボールキャッチ許可要求
+                    permit[fromID] = 0x06
+                    # ここで許可を出すかどうかを判断する（どうやって待機するか…）
+                    twe.sendTWE(tweAddr[fromID], 0x50, [permit[fromID]])
+                elif request[fromID] == 0x07:   # ボールシュート許可要求
+                    permit[fromID] = 0x07
+                    # ここで許可を出すかどうかを判断する（どうやって待機するか…）
+                    twe.sendTWE(tweAddr[fromID], 0x50, [permit[fromID]])
+                print("許可内容: " + hex(permit[fromID]) + " (" + permitText[permit[fromID]] + ")")
             print("")
     
         time.sleep(0.2)
@@ -90,42 +136,6 @@ def windowDaemon():
 
     configureTextBuf = ""
     for i in range(ROBOT_NUM):
-        actTextBuf = ""
-        if (act[i] == 0x00):
-            actTextBuf = "待機中"
-        elif (act[i] == 0x01):
-            actTextBuf = "走行中（目的地：" + destPos[i] + "）"
-        elif (act[i] == 0x02):
-            actTextBuf = "ボール探索中"
-        elif (act[i] == 0x03):
-            actTextBuf = "ボール発見、キャッチ中"
-        elif (act[i] == 0x04):
-            actTextBuf = "ボールシュート中"
-        else:
-            actTextBuf = "不明"
-
-        if (recvCom[i] == 0x00):
-            recvCommandBuf = "探索結果報告："
-        elif (recvCom[i] == 0x01):
-            recvCommandBuf = "位置到達報告："
-        elif (recvCom[i] == 0x02):
-            recvCommandBuf = "ボールシュート報告"
-        elif (recvCom[i] == 0x20):
-            recvCommandBuf = "行動指示要求"
-        elif (recvCom[i] == 0x21):
-            recvCommandBuf = "許可要求"
-        elif (recvCom[i] == 0x30):
-            recvCommandBuf = "通信成立報告"
-        else:
-            recvCommandBuf = "なし"
-
-        if (transCom[i] == 0x50):
-            transCommandBuf = "移動許可（目的地：" + destPos[i] + "）"
-        elif (transCom[i] == 0x51):
-            transCommandBuf = "行動許可（行動内容：" + actTextBuf + "）"
-        else:
-            transCommandBuf = "なし"
-
         if connectStatus[i]:
             configureTextBuf = str(i + 1) + "号機\n\n" + "接続状態: " + "接続済（TWELITEアドレス: " + hex(tweAddr[i]) + "）\n\n現在地: " + hex(pos[i]) + "\n状態: " + actTextBuf + "\n最終通信内容（受信）: " + recvCommandBuf + "\n最終通信内容（送信）: " + transCommandBuf
         else:
