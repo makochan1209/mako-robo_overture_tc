@@ -43,7 +43,7 @@ def init():
 serStrDebug = [[0xA5, 0x5A, 0x80, 0x03, 0x01, 0x02, 0x01, 0x02, 0x04], [0xA5, 0x5A, 0x80, 0x03, 0x01, 0x02, 0x04, 0x07, 0x04], [0xA5, 0x5A, 0x80, 0x03, 0x01, 0x21, 0x01, 0x21, 0x04]]
 # ボール探索開始, ボールシュート完了, LiDAR露光許可要求
 
-# 管制・受信
+# 管制・受信（受信したら指示を返信（送信）する形、常に起動している）
 def TCDaemon():
     while True: # このループは1回の受信パケット＋データ解析ごと
         # 1パケット受信
@@ -63,9 +63,6 @@ def TCDaemon():
                 print("行動報告")
                 act[fromID] = tweResult.data[0]
                 print("行動内容: " + hex(act[fromID]))
-            elif tweResult.command == 0x03: # ボール有無報告
-                print("ボール有無報告")
-                ballCaught[fromID] = True if tweResult.data[0] == 0x01 else False
             elif tweResult.command == 0x20: # 行動指示要求
                 print("行動指示要求")
             elif tweResult.command == 0x21: # 許可要求
@@ -87,7 +84,7 @@ def compEmgStop():
     twe.sendTWE(tweAddr[0], 0x71, [0xff])
 
 # 画面制御（上の情報を表示する）
-def screenDaemon():
+def windowDaemon():
     if WINDOW_MODE:
         labelTime.configure(text=time.strftime('%Y/%m/%d %H:%M:%S'))
 
@@ -97,7 +94,7 @@ def screenDaemon():
         if (act[i] == 0x00):
             actTextBuf = "待機中"
         elif (act[i] == 0x01):
-            actTextBuf = "走行中"
+            actTextBuf = "走行中（目的地：" + destPos[i] + "）"
         elif (act[i] == 0x02):
             actTextBuf = "ボール探索中"
         elif (act[i] == 0x03):
@@ -123,14 +120,14 @@ def screenDaemon():
             recvCommandBuf = "なし"
 
         if (transCom[i] == 0x50):
-            transCommandBuf = "移動許可：" + destPos[i]
+            transCommandBuf = "移動許可（目的地：" + destPos[i] + "）"
         elif (transCom[i] == 0x51):
-            transCommandBuf = "行動許可："
+            transCommandBuf = "行動許可（行動内容：" + actTextBuf + "）"
         else:
             transCommandBuf = "なし"
 
         if connectStatus[i]:
-            configureTextBuf = str(i + 1) + "号機\n\n" + "接続状態: " + "接続済（TWELITEアドレス: " + hex(tweAddr[i]) + "）\n\n場所: " + hex(pos[i]) + "\n状態: " + actTextBuf + "\n最終通信内容（受信）: " + recvCommandBuf + "\n最終通信内容（送信）: " + transCommandBuf
+            configureTextBuf = str(i + 1) + "号機\n\n" + "接続状態: " + "接続済（TWELITEアドレス: " + hex(tweAddr[i]) + "）\n\n現在地: " + hex(pos[i]) + "\n状態: " + actTextBuf + "\n最終通信内容（受信）: " + recvCommandBuf + "\n最終通信内容（送信）: " + transCommandBuf
         else:
             configureTextBuf = str(i + 1) + "号機\n\n" + "接続状態: " + "未接続"
 
@@ -147,14 +144,14 @@ def screenDaemon():
                 labelR5.configure(text=configureTextBuf)
             elif (i == 5):
                 labelR6.configure(text=configureTextBuf)
-        else:
-            print(configureTextBuf)
+        #else:
+        #    print(configureTextBuf)
 
     if WINDOW_MODE:
-        mainWindow.after(50, screenDaemon)
+        mainWindow.after(50, windowDaemon)
     else:
         time.sleep(1)
-        screenDaemon()
+        windowDaemon()
 
 # ロボット本体との接続
 def connect():
@@ -267,14 +264,13 @@ if WINDOW_MODE:
     mainWindow.bind("<KeyPress>", keyPress)
 
     # 表示更新スレッド開始
-    threadWindow = threading.Thread(target=screenDaemon, daemon=True)
+    threadWindow = threading.Thread(target=windowDaemon, daemon=True)
     threadWindow.start()
     mainWindow.mainloop()
 
 # ターミナルモード
 else:
-    threadTerminal = threading.Thread(target=screenDaemon, daemon=True)
-    threadTerminal.start()
+    print("管制システムは既に起動しています")
     # キー待機部分
     while True:
         print("0: 競技開始、1: 通信接続、2: 全ロボット緊急停止、9: プログラム終了")
