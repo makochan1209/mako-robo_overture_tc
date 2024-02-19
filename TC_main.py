@@ -82,6 +82,7 @@ def compStart():
 
 def compEmgStop():
     print("emgStop")
+    twe.sendTWE(tweAddr[0], 0x71, [0xff])
 
 # ウィンドウ制御（上の情報を表示する）
 def windowDaemon():
