@@ -33,6 +33,8 @@ actText = ["待機中", "走行中", "ボール探索中（未発見、LiDARな�
 requestText = ["", "移動許可要求", "", "ボール探索（未発見）LiDAR照射許可要求", "", "ボール探索（発見済）LiDAR照射許可要求", "ボールキャッチ許可要求", "ボールシュート許可要求"]
 permitText = ["", "移動許可", "", "ボール探索（未発見）LiDAR照射許可", "", "ボール探索（発見済）LiDAR照射許可", "ボールキャッチ許可", "ボールシュート許可"]
 
+nearerRoutePos = [0x08, 0x09]   # 手前回りルートの場所コード
+
 twe = None
 ser = None
 
@@ -64,12 +66,52 @@ def init():
 # ボール探索開始, ボールシュート完了, LiDAR露光許可要求
 
 # 管制・受信（受信したら指示を返信（送信）する形、常に起動している）
-# 各機の占有位置の判断。現在地と目的地の間に位置する領域を占有と判断する。自らの機体番号と、目的地のリスト、（任意）目的地がゴールゾーンの場合はゴールゾーンのリストを引数にとる。
-    # ゴールゾーン関連
-    # 1周目はまず一番遠いゴール、次に一番近いゴールを見る。
-    # 2周目は本当は移動中にゴールゾーンが解放される可能性も考慮したほうがいいか？
-def occupiedJudge():
-    pass    # 未実装
+# 経路上の場所コードのリスト生成（通る順にリストを作る）
+#### まだ書けていない
+def routePosGen(startPos, goalPos):
+    routePosList = []
+    if goalPos == 0xff: # 目的地がないとき
+        routePosList.append(startPos)
+    elif startPos in nearerRoutePos or goalPos in nearerRoutePos: # 手前回りルートの場所を通る場合
+        posNotNearer = goalPos if goalPos not in nearerRoutePos else startPos
+        posNearer = goalPos if goalPos in nearerRoutePos else startPos
+        if posNotNearer != 0x00:    # スタート地点以外
+            for j in range(0x01, posNotNearer + 1): # 0x01からゴール側の範囲
+                routePosList.append(j)
+        else:   # スタート地点の場合：0x00, 0x01の範囲を通る
+            routePosList.append(0x00)
+            routePosList.append(0x01)
+        routePosList.append(0x08)   # 0x08は確定で通る
+        if posNearer == 0x09:
+            routePosList.append(0x09)
+    else:   # 手前回りルート専用の場所を通らない場合
+        minPos = min(startPos, goalPos) # 小さい方の位置
+        maxPos = max(startPos, goalPos) # 大きい方の位置
+        routePosList = list(range(minPos, maxPos + 1))
+    return set(routePosList)
+
+# 各機の占有位置の判断。現在地と目的地の間に位置する領域を占有と判断する。除外する機体番号（自機）を引数にとる。返り値はタプル。
+def occupiedJudge(exception = []):
+    occupiedPosList = []
+    if not isinstance(exception, list):
+        exception = [exception]
+    
+    for i in range(ROBOT_NUM):
+        if i not in exception:
+            occupiedPosList += routePosGen(pos[i], destPos[i])
+    occupiedPosTuple = set(occupiedPosList)
+    return occupiedPosTuple
+
+# 目的地に最も近い到達可能な場所の値を返す
+def reachableArea(fromID, startPos, goalPos):
+    occupiedPosList = []
+    occupiedPosList += occupiedJudge(fromID)
+    routePos = []
+    routePos += routePosGen(startPos, goalPos)
+    for i in range(len(routePos)):
+        if routePos[i] in occupiedPosList:
+            routePos.pop(i)
+#### まだ書けていない
 
 # 許可要求への判断。許可できる場合は許可の出力をする一方で、許可できない場合は何もしない。
 def permitJudge():
@@ -81,14 +123,81 @@ def permitJudge():
             # 許可判断
             # ゴールゾーンでどのゴールに行くか判断する必要あり、ゴール内での移動でデッドロックにならないように、などなど
             # 基本的には奥からボールを入れていくが、相手がボールをシュートしに来ている場合は手前から行う。
+            # ゴールゾーン関連
+            # 1周目はまず一番遠いゴール、次に一番近いゴールを見る。
+            # 2周目は本当は移動中にゴールゾーンが解放される可能性も考慮したほうがいいか？
+            occupiedPos = occupiedJudge(fromID)
             if fromID == 0: # 1号機（奥回りルート）
-                if requestDestPos[i] == 0x51:   # ゴールゾーンに向かう場合
-                    if destPos[1] == 0xff:  # 2号機が既に移動をやめている場合
-                        if pos[1] == 0x00 or (pos[1] >= 0x07 and pos[1] <= 0x09):
-
-                    elif destPos[1] == 0x05:  # 2号機が青ゴールにいる場合
-                        permitted = False
-                    elif destPos[1] <= 0x04 and destPos[1] >= 0x01: #
+                if requestDestPos[i] == 0x00:   # スタート地点に向かう場合
+                    for j in range(pos[i] - 1, 0x01 - 1, -1):
+                        if j in occupiedPos:
+                            if permitDestPos == pos[i]:
+                                permitDestPos = j + 1
+                                permitted = True
+                            else:
+                                permitted = False
+                            break
+#### 以下関数とかにまとめる
+                elif requestDestPos[i] == 0x51:   # ボールをどこかのゴールに捨てたい（ゴールゾーンに向かうのも含む）場合
+                    if pos[i] <= 0x05 and pos[i] >= 0x01:  # ゴールゾーン内にいる場合：一番近いゴールに捨てに行く
+                        if pos[i] == 0x01:  # 赤色ゴールにいる場合：すれ違わない以上2号機から離れていくので占有の調査は不要
+                            if ballStatus[i]["y"] != 0:
+                                permitDestPos = 0x03
+                                permitted = True
+                            elif ballStatus[i]["b"] != 0:
+                                permitDestPos = 0x05
+                                permitted = True
+                        elif pos[i] == 0x03:    # 黄色ゴールにいる場合：次に近いゴールへ
+                            if ballStatus[i]["r"] != 0: # 赤色ゴールに向かう場合は占有の調査が必要
+                                if (occupiedPos & set(range(0x01, 0x02 + 1))) == ():  # 一番近いゴールまでの経路上に占有された場所がない
+                                    permitDestPos = 0x01
+                                    permitted = True
+                                else:
+                                    permitted = False
+                            elif ballStatus[i]["b"] != 0:   # 青色ゴールに向かう場合は占有の調査は不要
+                                permitDestPos = 0x05
+                                permitted = True
+                        elif pos[i] == 0x05:    # 青色ゴールにいる場合：2号機に近づくため、占有の調査が必要
+                            if ballStatus[i]["y"] != 0: # 黄色ゴールに向かう
+                                if (occupiedPos & set(range(0x03, 0x04 + 1))) == ():  # 一番近いゴールまでの経路上に占有された場所がない
+                                    permitDestPos = 0x03
+                                    permitted = True
+                                else:
+                                    permitted = False
+                            elif ballStatus[i]["r"] != 0:   # 赤色ゴールに向かう
+                                if (occupiedPos & set(range(0x01, 0x04 + 1))) == ():  # 一番近いゴールまでの経路上に占有された場所がない
+                                    permitDestPos = 0x01
+                                    permitted = True
+                                else:
+                                    permitted = False
+                        
+                    else:  # ゴールゾーンの外にいる場合：一番遠いゴールに向かうが、途中で占有されている場合は一番近いゴールまで向かう
+                        if ballStatus[i]["r"] != 0:
+                            if (occupiedPos & set(range(0x01, pos[i] + 1))) == ():  # 一番遠いゴールまでの経路上に占有された場所がない
+                                permitDestPos = 0x01
+                                permitted = True
+                            else:   # 一番遠いゴールまでの経路上に占有された場所がある：一番近いゴールに向かう
+                                destBuff = 0xff # 一番近いゴールの位置
+                                if ballStatus[i]["b"] != 0:
+                                    destBuff = 0x05
+                                elif ballStatus[i]["y"] != 0:
+                                    destBuff = 0x03
+                                else:
+                                    destBuff = 0x01
+                                if (occupiedPos & set(range(0x01, destBuff + 1))) == ():  # 一番近いゴールまでに占有された場所がない
+                                    permitDestPos = destBuff
+                                    permitted = True
+                                else:   # 一番近いゴールまでの経路上に占有された場所がある：その手前のゾーンまで向かう
+                                    # タプル"occupiedPos"の中で0x08、0x09を除いた最大値を取り出す
+                                    maxBuff = 0x00
+                                    for j in occupiedPos:
+                                        if j != 0x08 and j != 0x09 and j > maxBuff:
+                                            maxBuff = j
+                                    
+                                    permitDestPos = maxBuff + 1 # 行ける場所まで許可
+                                    permitted = True
+                                
+#### ここから下がまだ
             elif fromID == 1:   # 2号機（手前回りルート）
                 permitted = True
             
@@ -162,8 +271,6 @@ def TCDaemon():
                     elif act[fromID] == 0x01:
                         pos[fromID] = tweResult.data[1]
                         print("現在地: " + hex(pos[fromID]))
-                        destPos[fromID] = tweResult.data[2]
-                        print("目的地: " + hex(destPos[fromID]))
 
                 elif tweResult.command == 0x20: # 許可要求。ここで管制や許可を行う、管制処理はすべてここ。
                     requestQueue.append(fromID)
