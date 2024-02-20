@@ -9,7 +9,7 @@ import threading
 import serial.tools.list_ports
 import twelite
 
-WINDOW_MODE = True  # ウィンドウモードかどうか
+WINDOW_MODE = False  # ウィンドウモードかどうか
 
 # グリッドの大きさ
 GRID_WIDTH = 40
@@ -35,6 +35,8 @@ permitText = ["", "移動許可", "", "ボール探索（未発見）LiDAR照射
 twe = None
 ser = None
 
+pauseTC = False # 管制プログラムの一時停止
+
 def init():
     global ser, twe
     # 初期化
@@ -44,15 +46,15 @@ def init():
     twe = twelite.TWELITE(ser)
 
     for i in range(ROBOT_NUM):
-        tweAddr[i] = 0x01 + i   # 初期値
-        pos[i] = 0xff
-        destPos[i] = 0xff
-        act[i] = 0xff
-        request[i] = 0xff
-        requestDestPos[i] = 0xff
-        permit[i] = 0xff
-        ballStatus[i] = {"r": 0, "y": 0, "b": 0}
-        connectStatus[i] = False
+        tweAddr.append(0x01 + i)   # 初期値
+        pos.append(0xff)
+        destPos.append(0xff)
+        act.append(0xff)
+        request.append(0xff)
+        requestDestPos.append(0xff)
+        permit.append(0xff)
+        ballStatus.append({"r": 0, "y": 0, "b": 0})
+        connectStatus.append(False)
 
 # [0xA5, 0x5A, 0x80, "Length", "Data", "CD", 0x04]の形式で受信
 # "Data": 0x0*（送信元）, Command, Data
@@ -61,62 +63,63 @@ def init():
 # 管制・受信（受信したら指示を返信（送信）する形、常に起動している）
 def TCDaemon():
     while True: # このループは1回の受信パケット＋データ解析ごと
-        # 1パケット受信
-        tweResult = twe.recvTWE(ser)
+        if not pauseTC:
+            # 1パケット受信
+            tweResult = twe.recvTWE(ser)
+            
+            # データ解析
+            if tweResult.address != "":    # パケットが受信できたとき
+                fromID = tweAddr.index(tweResult.address)  # 通信相手（n台目→n-1）
+                print(str(fromID + 1) + "台目: ")
+                if tweResult.command == 0x00:   # 探索結果報告
+                    ballStatus[fromID]["r"] = tweResult.data[0]
+                    ballStatus[fromID]["y"] = tweResult.data[1]
+                    ballStatus[fromID]["b"] = tweResult.data[2]
+                    print("探索結果報告：赤" + str(ballStatus[fromID]["r"]) + "個、黄" + str(ballStatus[fromID]["y"]) + "個、青" + str(ballStatus[fromID]["b"]) + "個")
+                elif tweResult.command == 0x02: # 行動報告
+                    act[fromID] = tweResult.data[0]
+                    print("行動報告")
+                    print("行動内容: " + hex(act[fromID])) + " (" + actText[act[fromID]] + ")"
+                    if act[fromID] == 0x00:
+                        pos[fromID] = tweResult.data[1]
+                        print("現在地: " + hex(pos[fromID]))
+                    elif act[fromID] == 0x01:
+                        pos[fromID] = tweResult.data[1]
+                        print("現在地: " + hex(pos[fromID]))
+                        destPos[fromID] = tweResult.data[2]
+                        print("目的地: " + hex(destPos[fromID]))
+
+                elif tweResult.command == 0x20: # 許可要求。ここで管制や許可を行う、管制処理はすべてここ。
+                    request[fromID] = tweResult.data[0]
+                    print("許可要求")
+                    print("要求内容: " + hex(request[fromID]) + " (" + requestText[request[fromID]] + ")")
+
+                    if request[fromID] == 0x01: # 移動許可要求
+                        requestDestPos[fromID] = tweResult.data[1]
+                        print("移動許可要求の目的地: " + hex(requestDestPos[fromID]))
+
+                        permit[fromID] = 0x01
+
+                        # ここで許可を出すかどうかを判断する（どうやって待機するか…）
+                        destPos[fromID] = requestDestPos[fromID]    # ゴールゾーンでどのゴールに行くかが異なる場合はここで仕分ける必要あり
+                        requestDestPos[fromID] = 0xff
+                        print("移動許可の目的地: " + hex(destPos[fromID]))
+                        twe.sendTWE(tweAddr[fromID], 0x50, [permit[fromID], destPos[fromID]]) # 許可を返信
+                    elif request[fromID] == 0x03 or request[fromID] == 0x05: # ボール探索LiDAR照射許可要求
+                        permit[fromID] = 0x05
+                        # ここで許可を出すかどうかを判断する（どうやって待機するか…）
+                        twe.sendTWE(tweAddr[fromID], 0x50, [permit[fromID]]) # 許可を返信
+                    elif request[fromID] == 0x06:   # ボールキャッチ許可要求
+                        permit[fromID] = 0x06
+                        # ここで許可を出すかどうかを判断する（どうやって待機するか…）
+                        twe.sendTWE(tweAddr[fromID], 0x50, [permit[fromID]])
+                    elif request[fromID] == 0x07:   # ボールシュート許可要求
+                        permit[fromID] = 0x07
+                        # ここで許可を出すかどうかを判断する（どうやって待機するか…）
+                        twe.sendTWE(tweAddr[fromID], 0x50, [permit[fromID]])
+                    print("許可内容: " + hex(permit[fromID]) + " (" + permitText[permit[fromID]] + ")")
+                print("")
         
-        # データ解析
-        if tweResult.address != "":    # パケットが受信できたとき
-            fromID = tweAddr.index(tweResult.address)  # 通信相手（n台目→n-1）
-            print(str(fromID + 1) + "台目: ")
-            if tweResult.command == 0x00:   # 探索結果報告
-                ballStatus[fromID]["r"] = tweResult.data[0]
-                ballStatus[fromID]["y"] = tweResult.data[1]
-                ballStatus[fromID]["b"] = tweResult.data[2]
-                print("探索結果報告：赤" + str(ballStatus[fromID]["r"]) + "個、黄" + str(ballStatus[fromID]["y"]) + "個、青" + str(ballStatus[fromID]["b"]) + "個")
-            elif tweResult.command == 0x02: # 行動報告
-                act[fromID] = tweResult.data[0]
-                print("行動報告")
-                print("行動内容: " + hex(act[fromID])) + " (" + actText[act[fromID]] + ")"
-                if act[fromID] == 0x00:
-                    pos[fromID] = tweResult.data[1]
-                    print("現在地: " + hex(pos[fromID]))
-                elif act[fromID] == 0x01:
-                    pos[fromID] = tweResult.data[1]
-                    print("現在地: " + hex(pos[fromID]))
-                    destPos[fromID] = tweResult.data[2]
-                    print("目的地: " + hex(destPos[fromID]))
-
-            elif tweResult.command == 0x20: # 許可要求。ここで管制や許可を行う、管制処理はすべてここ。
-                request[fromID] = tweResult.data[0]
-                print("許可要求")
-                print("要求内容: " + hex(request[fromID]) + " (" + requestText[request[fromID]] + ")")
-
-                if request[fromID] == 0x01: # 移動許可要求
-                    requestDestPos[fromID] = tweResult.data[1]
-                    print("移動許可要求の目的地: " + hex(requestDestPos[fromID]))
-
-                    permit[fromID] = 0x01
-
-                    # ここで許可を出すかどうかを判断する（どうやって待機するか…）
-                    destPos[fromID] = requestDestPos[fromID]    # ゴールゾーンでどのゴールに行くかが異なる場合はここで仕分ける必要あり
-                    requestDestPos[fromID] = 0xff
-                    print("移動許可の目的地: " + hex(destPos[fromID]))
-                    twe.sendTWE(tweAddr[fromID], 0x50, [permit[fromID], destPos[fromID]]) # 許可を返信
-                elif request[fromID] == 0x03 or request[fromID] == 0x05: # ボール探索LiDAR照射許可要求
-                    permit[fromID] = 0x05
-                    # ここで許可を出すかどうかを判断する（どうやって待機するか…）
-                    twe.sendTWE(tweAddr[fromID], 0x50, [permit[fromID]]) # 許可を返信
-                elif request[fromID] == 0x06:   # ボールキャッチ許可要求
-                    permit[fromID] = 0x06
-                    # ここで許可を出すかどうかを判断する（どうやって待機するか…）
-                    twe.sendTWE(tweAddr[fromID], 0x50, [permit[fromID]])
-                elif request[fromID] == 0x07:   # ボールシュート許可要求
-                    permit[fromID] = 0x07
-                    # ここで許可を出すかどうかを判断する（どうやって待機するか…）
-                    twe.sendTWE(tweAddr[fromID], 0x50, [permit[fromID]])
-                print("許可内容: " + hex(permit[fromID]) + " (" + permitText[permit[fromID]] + ")")
-            print("")
-    
         time.sleep(0.2)
 
 
@@ -165,7 +168,9 @@ def windowDaemon():
 
 # ロボット本体との接続
 def connect():
-    buttonConnect.grid_forget()
+    # buttonConnect.grid_forget()
+    global pauseTC
+    pauseTC = True  # TCの一時停止
     
     for i in range(ROBOT_NUM):  # 1台ずつ接続
         if not connectStatus[i]:    # 未接続のとき
@@ -196,14 +201,19 @@ def connect():
                     print()
                     break
 
-    buttonStart.grid(row=6,column=0,columnspan=2)
+    # buttonStart.grid(row=6,column=0,columnspan=2)
+    pauseTC = False  # TCの再開
 
 def exitTCApp():
+    global pauseTC
+    pauseTC = True
     ser.close()
     if WINDOW_MODE:
         mainWindow.destroy()
+    exit()
 
-def keyPress(event):
+# ウィンドウモードでのキー待機
+def windowKeyPress(event):
     # Enterのとき
     if event.keycode == 13:
         compStart()
@@ -217,8 +227,29 @@ def keyPress(event):
     elif event.keycode == 105:
         exitTCApp()
 
+def terminalKeyPressWait():
+    while True:
+        print("1: 通信接続、2: 全ロボット緊急停止、3: 競技開始、9: プログラム終了")
+        a = input("機体への送信信号・プログラム終了: ")
+        if a == "1":
+            connect()
+        elif a == "2":
+            compEmgStop()
+        elif a == "3":
+            compStart()
+        elif a == "9":
+            exitTCApp()
+        else:
+            print("無効な入力です")
+        time.sleep(0.5)
+
 # 以下メインルーチン
 init()
+
+mode = input("ウィンドウモードは1を入力してEnter: ")
+
+if mode == 1:
+    WINDOW_MODE = True
 
 # 管制プログラムの起動（受信した信号に対して送信するパッシブなものなので常に動かす）
 threadTC = threading.Thread(target=TCDaemon, daemon=True)
@@ -265,13 +296,15 @@ if WINDOW_MODE:
     buttonConnect.grid(row=5,column=0,columnspan=2)
 
     buttonStart = tk.Button(mainWindow, text = "競技開始 (Enter)", command = compStart)
+    buttonConnect.grid(row=6,column=0,columnspan=2)
     buttonEmgStop = tk.Button(mainWindow, text = "全ロボット緊急停止 (Num 2)", command = compEmgStop)
+    buttonConnect.grid(row=7,column=0,columnspan=2)
 
     buttonExit = tk.Button(mainWindow, text = "プログラム終了 (Num 9)", command = exitTCApp)
     buttonExit.grid(row=10,column=0,columnspan=2)
 
     # キー待機部分
-    mainWindow.bind("<KeyPress>", keyPress)
+    mainWindow.bind("<KeyPress>", windowKeyPress)
 
     # 表示更新スレッド開始
     threadWindow = threading.Thread(target=windowDaemon, daemon=True)
@@ -282,17 +315,4 @@ if WINDOW_MODE:
 else:
     print("管制システムは既に起動しています")
     # キー待機部分
-    while True:
-        print("0: 競技開始、1: 通信接続、2: 全ロボット緊急停止、9: プログラム終了")
-        a = input("機体への送信信号：")
-        if a == "0":
-            compStart()
-        elif a == "1":
-            connect()
-        elif a == "2":
-            compEmgStop()
-        elif a == "9":
-            exitTCApp()
-        else:
-            print("無効な入力です")
-        time.sleep(0.5)
+    terminalKeyPressWait()
