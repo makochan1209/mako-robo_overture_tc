@@ -21,7 +21,7 @@ tweAddr = []  # 各機のTWELITEのアドレス（TWELITE交換に対応）
 
 pos = [] # ロボットの位置
 destPos = [] # ロボットの行き先
-act = [] # ロボットの作業内容
+act = [] # ロボットの現在の行動内容
 request = [] # ロボットの直近要求内容
 requestDestPos = [] # ロボットの直近要求内容における目的地
 permit = [] # ロボットの直近許可内容
@@ -130,7 +130,7 @@ def compStart():
     global pauseTC
     pauseTC = True
     print("start")
-    twe.sendTWE(tweAddr[0], 0x71, [0x00]) # 1台目に競技開始を通知
+    twe.sendTWE(tweAddr[0], 0x71, [0x00]) # 2台ともに競技開始を通知
     pauseTC = False
 
 def compEmgStop():
@@ -148,7 +148,7 @@ def windowDaemon():
     configureTextBuf = ""
     for i in range(ROBOT_NUM):
         if connectStatus[i]:
-            configureTextBuf = str(i + 1) + "号機\n\n" + "接続状態: " + "接続済（TWELITEアドレス: " + hex(tweAddr[i]) + "）\n\n現在地: " + hex(pos[i]) + "\n状態: " + actTextBuf + "\n最終通信内容（受信）: " + recvCommandBuf + "\n最終通信内容（送信）: " + transCommandBuf
+            configureTextBuf = str(i + 1) + "号機\n\n" + "接続状態: " + "接続済（TWELITEアドレス: " + hex(tweAddr[i]) + "）\n\n現在地: " + hex(pos[i]) + "\n目的地: " + hex(destPos[i]) + "\n現在の行動: " + actText[act[i]] + "\nボール状況: 赤" + str(ballStatus[i]["r"]) + "個、黄" + str(ballStatus[i]["y"]) + "個、青" + str(ballStatus[i]["b"]) + "個\n直近要求内容: " + requestText[request[i]] + "\n直近要求内容の目的地: " + hex(requestDestPos[i]) + "\n直近許可内容: " + permitText[permit[i]] 
         else:
             configureTextBuf = str(i + 1) + "号機\n\n" + "接続状態: " + "未接続"
 
