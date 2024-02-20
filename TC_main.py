@@ -99,25 +99,23 @@ def TCDaemon():
                     if request[fromID] == 0x01: # 移動許可要求
                         requestDestPos[fromID] = tweResult.data[1]
                         print("移動許可要求の目的地: " + hex(requestDestPos[fromID]))
-
-                        permit[fromID] = 0x01
-
                         # ここで許可を出すかどうかを判断する（どうやって待機するか…）
-                        destPos[fromID] = requestDestPos[fromID]    # ゴールゾーンでどのゴールに行くかが異なる場合はここで仕分ける必要あり
+                        permit[fromID] = 0x01
+                        destPos[fromID] = requestDestPos[fromID]    # ゴールゾーンでどのゴールに行くか判断する必要あり、などなど
                         requestDestPos[fromID] = 0xff
                         print("移動許可の目的地: " + hex(destPos[fromID]))
                         twe.sendTWE(tweAddr[fromID], 0x50, [permit[fromID], destPos[fromID]]) # 許可を返信
                     elif request[fromID] == 0x03 or request[fromID] == 0x05: # ボール探索LiDAR照射許可要求
-                        permit[fromID] = 0x05
                         # ここで許可を出すかどうかを判断する（どうやって待機するか…）
+                        permit[fromID] = request[fromID]
                         twe.sendTWE(tweAddr[fromID], 0x50, [permit[fromID]]) # 許可を返信
                     elif request[fromID] == 0x06:   # ボールキャッチ許可要求
-                        permit[fromID] = 0x06
                         # ここで許可を出すかどうかを判断する（どうやって待機するか…）
+                        permit[fromID] = 0x06
                         twe.sendTWE(tweAddr[fromID], 0x50, [permit[fromID]])
                     elif request[fromID] == 0x07:   # ボールシュート許可要求
-                        permit[fromID] = 0x07
                         # ここで許可を出すかどうかを判断する（どうやって待機するか…）
+                        permit[fromID] = 0x07
                         twe.sendTWE(tweAddr[fromID], 0x50, [permit[fromID]])
                     print("許可内容: " + hex(permit[fromID]) + " (" + permitText[permit[fromID]] + ")")
                 print("")
