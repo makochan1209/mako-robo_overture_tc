@@ -127,12 +127,18 @@ def TCDaemon():
 
 # ボタン操作からの管制への反映
 def compStart():
+    global pauseTC
+    pauseTC = True
     print("start")
     twe.sendTWE(tweAddr[0], 0x71, [0x00]) # 1台目に競技開始を通知
+    pauseTC = False
 
 def compEmgStop():
+    global pauseTC
+    pauseTC = True
     print("emgStop")
     twe.sendTWE(tweAddr[0], 0x71, [0xff])
+    pauseTC = False
 
 # 画面制御（上の情報を表示する）
 def windowDaemon():
@@ -232,7 +238,7 @@ def terminalKeyPressWait():
             exitTCApp()
         else:
             print("無効な入力です")
-        time.sleep(0.5)
+        # time.sleep(0.5)
 
 # 以下メインルーチン
 init()
