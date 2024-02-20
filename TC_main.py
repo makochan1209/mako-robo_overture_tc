@@ -37,6 +37,8 @@ ser = None
 
 pauseTC = False # 管制プログラムの一時停止
 
+labelR = []
+
 def init():
     global ser, twe
     # 初期化
@@ -145,18 +147,7 @@ def windowDaemon():
             configureTextBuf = str(i + 1) + "号機\n\n" + "接続状態: " + "未接続"
 
         if WINDOW_MODE:
-            if (i == 0):
-                labelR1.configure(text=configureTextBuf)
-            elif (i == 1):
-                labelR2.configure(text=configureTextBuf)
-            elif (i == 2):
-                labelR3.configure(text=configureTextBuf)
-            elif (i == 3):
-                labelR4.configure(text=configureTextBuf)
-            elif (i == 4):
-                labelR5.configure(text=configureTextBuf)
-            elif (i == 5):
-                labelR6.configure(text=configureTextBuf)
+            labelR[i].configure(text=configureTextBuf)
         #else:
         #    print(configureTextBuf)
 
@@ -248,7 +239,7 @@ init()
 
 mode = input("ウィンドウモードは1を入力してEnter: ")
 
-if mode == 1:
+if mode == '1':
     WINDOW_MODE = True
 
 # 管制プログラムの起動（受信した信号に対して送信するパッシブなものなので常に動かす）
@@ -268,40 +259,26 @@ if WINDOW_MODE:
     mainFrame.grid(column=0, row=0)
 
     # タイトル
-    labelTitle = tk.Label(mainWindow, text='Ascella by Team mako-robo\n管制ウィンドウ')
+    labelTitle = tk.Label(mainWindow, text='Overture by Team mako-robo\n管制ウィンドウ')
     labelTitle.grid(row=0,column=0,columnspan=2)
     labelTime = tk.Label(mainWindow, text='')
     labelTime.grid(row=1,column=0,columnspan=2)
 
     # ウィンドウの構成
-    labelR1 = tk.Label(mainWindow, text='1号機', anchor=tk.N, width=GRID_WIDTH, height=GRID_HEIGHT)
-    labelR1.grid(row=2,column=0)
-    if ROBOT_NUM >= 2:
-        labelR2 = tk.Label(mainWindow, text='2号機', anchor=tk.N, width=GRID_WIDTH, height=GRID_HEIGHT)
-        labelR2.grid(row=2,column=1)
-    if ROBOT_NUM >= 3:
-        labelR3 = tk.Label(mainWindow, text='3号機', anchor=tk.N, width=GRID_WIDTH, height=GRID_HEIGHT)
-        labelR3.grid(row=3,column=0)
-    if ROBOT_NUM >= 4:
-        labelR4 = tk.Label(mainWindow, text='4号機', anchor=tk.N, width=GRID_WIDTH, height=GRID_HEIGHT)
-        labelR4.grid(row=3,column=1)
-    if ROBOT_NUM >= 5:
-        labelR5 = tk.Label(mainWindow, text='5号機', anchor=tk.N, width=GRID_WIDTH, height=GRID_HEIGHT)
-        labelR5.grid(row=4,column=0)
-    if ROBOT_NUM >= 6:
-        labelR6 = tk.Label(mainWindow, text='6号機', anchor=tk.N, width=GRID_WIDTH, height=GRID_HEIGHT)
-        labelR6.grid(row=4,column=1)
-
+    for i in range(ROBOT_NUM):
+        labelR.append(tk.Label(mainWindow, text=(str(i + 1) + "号機"), anchor=tk.N, width=GRID_WIDTH, height=GRID_HEIGHT))
+        labelR[i].grid(row=2 + int(i / 2),column=(i % 2))
+    
     buttonConnect = tk.Button(mainWindow, text = "通信接続 (Num 1)", command = connect)
-    buttonConnect.grid(row=5,column=0,columnspan=2)
+    buttonConnect.grid(row=2 + int(ROBOT_NUM / 2) + ROBOT_NUM % 2,column=0,columnspan=2)
 
     buttonStart = tk.Button(mainWindow, text = "競技開始 (Enter)", command = compStart)
-    buttonConnect.grid(row=6,column=0,columnspan=2)
+    buttonStart.grid(row=3 + int(ROBOT_NUM / 2) + ROBOT_NUM % 2,column=0,columnspan=2)
     buttonEmgStop = tk.Button(mainWindow, text = "全ロボット緊急停止 (Num 2)", command = compEmgStop)
-    buttonConnect.grid(row=7,column=0,columnspan=2)
+    buttonEmgStop.grid(row=4 + int(ROBOT_NUM / 2) + ROBOT_NUM % 2,column=0,columnspan=2)
 
     buttonExit = tk.Button(mainWindow, text = "プログラム終了 (Num 9)", command = exitTCApp)
-    buttonExit.grid(row=10,column=0,columnspan=2)
+    buttonExit.grid(row=5 + int(ROBOT_NUM / 2) + ROBOT_NUM % 2,column=0,columnspan=2)
 
     # キー待機部分
     mainWindow.bind("<KeyPress>", windowKeyPress)

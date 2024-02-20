@@ -37,39 +37,54 @@ class TWELITE:
         cdBuff = 0
         serBuffStr = []
         result = Sample()
+
+        WAIT_TIME = 1
+        waitTimeCount = 0
         
         # データ受信
-        while self.ser.in_waiting > 0: # データが来ているか・またはデバッグモードのとき。このループは1バイトごと、パケット受信完了でbreak
-            buff = struct.unpack("<B", self.ser.read())[0]
-            
-            serBuffStr.append(buff)
-            
-            if len(serBuffStr) == 1 and buff != 0xA5: # パケット開始がA5でない場合は破棄
-                serBuffStr = []
+        if self.ser.in_waiting > 0:    # データが来ていないとき
+            while True: # データが来ているか・またはデバッグモードのとき。このループは1バイトごと、パケット受信完了でbreak
+                if self.ser.in_waiting <= 0:    # データが来ていないとき
+                    time.sleep(0.05)
+                    waitTimeCount += 0.05
+                    if waitTimeCount >= WAIT_TIME:  # 1秒以上データが来ないとき
+                        break
                 
-            if len(serBuffStr) > 4:    # データの範囲
-                if len(serBuffStr) <= 4 + serBuffStr[3]:    # データ終了まで
-                    cdBuff = cdBuff ^ buff   # CD計算
-                elif len(serBuffStr) == 4 + serBuffStr[3] + 2:    # EOTまで終了
-                    print("Packet Received")
-                    print("Recieved Data:")
-                    print([hex(i) for i in serBuffStr])
-                    if serBuffStr[len(serBuffStr) - 1] == 0x04: # EOTチェック
-                        print("EOT OK")
-                        if cdBuff == serBuffStr[len(serBuffStr) - 2]:
-                            print("CD OK")
-                        else:
-                            print("CD NG, Expected: " + hex(cdBuff) + ", Received: " + hex(serBuffStr[len(serBuffStr) - 2]))
+                else:
+                    waitTimeCount = 0
+
+                    buff = struct.unpack("<B", self.ser.read())[0]
+                    serBuffStr.append(buff)
+                
+                    if len(serBuffStr) == 1 and buff != 0xA5: # パケット開始がA5でない場合は破棄
+                        serBuffStr = []
+                        
+                    elif len(serBuffStr) > 4:    # データの範囲
+                        if len(serBuffStr) <= 4 + serBuffStr[3]:    # データ終了まで
+                            cdBuff = cdBuff ^ buff   # CD計算
+                        elif len(serBuffStr) == 4 + serBuffStr[3] + 2:    # EOTまで終了
+                            break
+            
+            if serBuffStr != []:
+                print("Packet Received")
+                print("Recieved Data:")
+                print([hex(i) for i in serBuffStr])
+                if serBuffStr[len(serBuffStr) - 1] == 0x04: # EOTチェック
+                    print("EOT OK")
+                    if cdBuff == serBuffStr[len(serBuffStr) - 2]:
+                        print("CD OK")
                     else:
-                        print("EOT NG")
-                    break
-        if serBuffStr != [] and len(serBuffStr) < 8:    # パケットが短すぎる場合は破棄
-            serBuffStr = []
-            print("Packet too short")
-        elif serBuffStr != [] and serBuffStr[4] == 0xdb:   # 応答メッセージなので省略
-            if not responcePacket:  # リスポンスパケットを省略する場合は破棄
-                serBuffStr = []
-            print("Response Packet")
+                        print("CD NG, Expected: " + hex(cdBuff) + ", Received: " + hex(serBuffStr[len(serBuffStr) - 2]))
+                else:
+                    print("EOT NG")
+
+                if serBuffStr != [] and len(serBuffStr) < 8:    # パケットが短すぎる場合は破棄
+                    serBuffStr = []
+                    print("Packet too short")
+                elif serBuffStr != [] and serBuffStr[4] == 0xdb:   # 応答メッセージなので省略
+                    if not responcePacket:  # リスポンスパケットを省略する場合は破棄
+                        serBuffStr = []
+                    print("Response Packet")
 
         # データ解析
         if serBuffStr != []:
