@@ -22,8 +22,9 @@ tweAddr = []  # 各機のTWELITEのアドレス（TWELITE交換に対応）
 pos = [] # ロボットの位置
 destPos = [] # ロボットの行き先
 act = [] # ロボットの現在の行動内容
-request = [] # ロボットの直近要求内容
-requestDestPos = [] # ロボットの直近要求内容における目的地
+request = [] # ロボットの許可要求内容（許可されていないもののみ）
+requestDestPos = [] # ロボットの許可要求内容における目的地（許可されていないもののみ）
+requestQueue = [] # ロボットの許可要求の順序キュー
 permit = [] # ロボットの直近許可内容
 ballStatus = [] # ボール取得個数、ロボットごとの配列で、その中の各値は連想配列（r, g, b）で管理
 connectStatus = []  # 接続できているか
@@ -63,6 +64,79 @@ def init():
 # ボール探索開始, ボールシュート完了, LiDAR露光許可要求
 
 # 管制・受信（受信したら指示を返信（送信）する形、常に起動している）
+# 各機の占有位置の判断。現在地と目的地の間に位置する領域を占有と判断する。自らの機体番号と、目的地のリスト、（任意）目的地がゴールゾーンの場合はゴールゾーンのリストを引数にとる。
+    # ゴールゾーン関連
+    # 1周目はまず一番遠いゴール、次に一番近いゴールを見る。
+    # 2周目は本当は移動中にゴールゾーンが解放される可能性も考慮したほうがいいか？
+def occupiedJudge():
+    pass    # 未実装
+
+# 許可要求への判断。許可できる場合は許可の出力をする一方で、許可できない場合は何もしない。
+def permitJudge():
+    for i in len(requestQueue):
+        permitted = False   # 許可を出す場合はこれをTrueにする、ひとつ許可が出たらこの関数は終了して次のループの呼び出しでまたこの関数が実行される。
+        fromID = requestQueue[i]
+        if request[fromID] == 0x01: # 移動許可要求
+            permitDestPos = 0xff    # 許可する目的地のバッファ（destPosにすぐ代入されるため表示等不要）
+            # 許可判断
+            # ゴールゾーンでどのゴールに行くか判断する必要あり、ゴール内での移動でデッドロックにならないように、などなど
+            # 基本的には奥からボールを入れていくが、相手がボールをシュートしに来ている場合は手前から行う。
+            if fromID == 0: # 1号機（奥回りルート）
+                if requestDestPos[i] == 0x51:   # ゴールゾーンに向かう場合
+                    if destPos[1] == 0xff:  # 2号機が既に移動をやめている場合
+                        if pos[1] == 0x00 or (pos[1] >= 0x07 and pos[1] <= 0x09):
+
+                    elif destPos[1] == 0x05:  # 2号機が青ゴールにいる場合
+                        permitted = False
+                    elif destPos[1] <= 0x04 and destPos[1] >= 0x01: #
+            elif fromID == 1:   # 2号機（手前回りルート）
+                permitted = True
+            
+            if permitted:
+                permit[fromID] = 0x01
+                destPos[fromID] = permitDestPos
+                requestDestPos[fromID] = 0xff
+                print("移動許可、目的地: " + hex(destPos[fromID]))
+                twe.sendTWE(tweAddr[fromID], 0x50, [permit[fromID], destPos[fromID]]) # 許可を返信
+
+        elif request[fromID] == 0x03 or request[fromID] == 0x05: # ボール探索LiDAR照射許可要求
+            # 許可判断
+            for j in range(ROBOT_NUM):
+                if j != fromID and (act[j] == 0x03 or act[j] == 0x05):
+                    permitted = False
+                else:
+                    permitted = True
+
+            if permitted:
+                permit[fromID] = request[fromID]
+                twe.sendTWE(tweAddr[fromID], 0x50, [permit[fromID]]) # 許可を返信
+
+        elif request[fromID] == 0x06:   # ボールキャッチ許可要求
+            # 許可判断
+            for j in range(ROBOT_NUM):
+                if j != fromID and act[j] == 0x06:
+                    permitted = False
+                else:
+                    permitted = True
+
+            if permitted:
+                permit[fromID] = 0x06
+                twe.sendTWE(tweAddr[fromID], 0x50, [permit[fromID]])
+
+        elif request[fromID] == 0x07:   # ボールシュート許可要求（今回は同一領域で走路がかぶることがないため基本許可）
+            # 許可判断
+            permitted = True
+            if permitted:
+                permit[fromID] = 0x07
+                twe.sendTWE(tweAddr[fromID], 0x50, [permit[fromID]])
+        
+        if permitted:   # 許可時の共通処理
+            print("許可内容: " + hex(permit[fromID]) + " (" + permitText[permit[fromID]] + ")")
+            requestQueue.pop(i)
+            request[fromID] = 0xff
+            break
+
+# 通信デーモン
 def TCDaemon():
     while True: # このループは1回の受信パケット＋データ解析ごと
         if not pauseTC:
@@ -92,34 +166,17 @@ def TCDaemon():
                         print("目的地: " + hex(destPos[fromID]))
 
                 elif tweResult.command == 0x20: # 許可要求。ここで管制や許可を行う、管制処理はすべてここ。
+                    requestQueue.append(fromID)
                     request[fromID] = tweResult.data[0]
                     print("許可要求")
                     print("要求内容: " + hex(request[fromID]) + " (" + requestText[request[fromID]] + ")")
-
                     if request[fromID] == 0x01: # 移動許可要求
                         requestDestPos[fromID] = tweResult.data[1]
                         print("移動許可要求の目的地: " + hex(requestDestPos[fromID]))
-                        # ここで許可を出すかどうかを判断する（どうやって待機するか…）
-                        permit[fromID] = 0x01
-                        destPos[fromID] = requestDestPos[fromID]    # ゴールゾーンでどのゴールに行くか判断する必要あり、などなど
-                        requestDestPos[fromID] = 0xff
-                        print("移動許可の目的地: " + hex(destPos[fromID]))
-                        twe.sendTWE(tweAddr[fromID], 0x50, [permit[fromID], destPos[fromID]]) # 許可を返信
-                    elif request[fromID] == 0x03 or request[fromID] == 0x05: # ボール探索LiDAR照射許可要求
-                        # ここで許可を出すかどうかを判断する（どうやって待機するか…）
-                        permit[fromID] = request[fromID]
-                        twe.sendTWE(tweAddr[fromID], 0x50, [permit[fromID]]) # 許可を返信
-                    elif request[fromID] == 0x06:   # ボールキャッチ許可要求
-                        # ここで許可を出すかどうかを判断する（どうやって待機するか…）
-                        permit[fromID] = 0x06
-                        twe.sendTWE(tweAddr[fromID], 0x50, [permit[fromID]])
-                    elif request[fromID] == 0x07:   # ボールシュート許可要求
-                        # ここで許可を出すかどうかを判断する（どうやって待機するか…）
-                        permit[fromID] = 0x07
-                        twe.sendTWE(tweAddr[fromID], 0x50, [permit[fromID]])
-                    print("許可内容: " + hex(permit[fromID]) + " (" + permitText[permit[fromID]] + ")")
+                
                 print("")
         
+        permitJudge()   # 許可要求の判断（過去分含む）
         time.sleep(0.2)
 
 
@@ -249,7 +306,7 @@ if mode == '1':
 # 管制プログラムの起動（受信した信号に対して送信するパッシブなものなので常に動かす）
 threadTC = threading.Thread(target=TCDaemon, daemon=True)
 threadTC.start()
-i = 0
+fromID = 0
 
 # ウィンドウ表示モード
 if WINDOW_MODE:
@@ -269,9 +326,9 @@ if WINDOW_MODE:
     labelTime.grid(row=1,column=0,columnspan=2)
 
     # ウィンドウの構成
-    for i in range(ROBOT_NUM):
-        labelR.append(tk.Label(mainWindow, text=(str(i + 1) + "号機"), anchor=tk.N, width=GRID_WIDTH, height=GRID_HEIGHT))
-        labelR[i].grid(row=2 + int(i / 2),column=(i % 2))
+    for fromID in range(ROBOT_NUM):
+        labelR.append(tk.Label(mainWindow, text=(str(fromID + 1) + "号機"), anchor=tk.N, width=GRID_WIDTH, height=GRID_HEIGHT))
+        labelR[fromID].grid(row=2 + int(fromID / 2),column=(fromID % 2))
     
     buttonConnect = tk.Button(mainWindow, text = "通信接続 (Num 1)", command = connect)
     buttonConnect.grid(row=2 + int(ROBOT_NUM / 2) + ROBOT_NUM % 2,column=0,columnspan=2)
