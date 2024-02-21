@@ -67,7 +67,6 @@ def init():
 
 # 管制・受信（受信したら指示を返信（送信）する形、常に起動している）
 # 経路上の場所コードのリスト生成（通る順にリストを作る）
-#### まだ書けていない
 def routePosGen(startPos, goalPos):
     routePosList = []
     if goalPos == 0xff: # 目的地がないとき
