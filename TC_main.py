@@ -75,20 +75,27 @@ def routePosGen(startPos, goalPos):
     elif startPos in nearerRoutePos or goalPos in nearerRoutePos: # 手前回りルートの場所を通る場合
         posNotNearer = goalPos if goalPos not in nearerRoutePos else startPos
         posNearer = goalPos if goalPos in nearerRoutePos else startPos
+        
+        if posNearer == 0x09:
+            routePosList.append(0x09)
+        routePosList.append(0x08)   # 0x08は確定で通る
+        
         if posNotNearer != 0x00:    # スタート地点以外
             for j in range(0x01, posNotNearer + 1): # 0x01からゴール側の範囲
                 routePosList.append(j)
         else:   # スタート地点の場合：0x00, 0x01の範囲を通る
-            routePosList.append(0x00)
             routePosList.append(0x01)
-        routePosList.append(0x08)   # 0x08は確定で通る
-        if posNearer == 0x09:
-            routePosList.append(0x09)
+            routePosList.append(0x00)
+        
+        if goalPos == posNearer: # 逆順にする
+            routePosList.reverse()
+
     else:   # 手前回りルート専用の場所を通らない場合
-        minPos = min(startPos, goalPos) # 小さい方の位置
-        maxPos = max(startPos, goalPos) # 大きい方の位置
-        routePosList = list(range(minPos, maxPos + 1))
-    return set(routePosList)
+        if startPos < goalPos:
+            routePosList = list(range(startPos, goalPos + 1))
+        else:
+            routePosList = list(range(goalPos, startPos - 1, -1))
+    return routePosList
 
 # 各機の占有位置の判断。現在地と目的地の間に位置する領域を占有と判断する。除外する機体番号（自機）を引数にとる。返り値はタプル。
 def occupiedJudge(exception = []):
