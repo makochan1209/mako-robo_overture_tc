@@ -109,15 +109,16 @@ def occupiedJudge(exception = []):
     return occupiedPosTuple
 
 # 目的地に最も近い到達可能な場所の値を返す
-def reachableArea(fromID, startPos, goalPos):
+def reachablePos(fromID, startPos, goalPos):
     occupiedPosList = []
     occupiedPosList += occupiedJudge(fromID)
-    routePos = []
-    routePos += routePosGen(startPos, goalPos)
-    for i in range(len(routePos)):
-        if routePos[i] in occupiedPosList:
-            routePos.pop(i)
-#### まだ書けていない
+    reachablePos = []
+    reachablePos += routePosGen(startPos, goalPos)
+    for i in range(len(reachablePos)):
+        if reachablePos[i] in occupiedPosList:
+            reachablePos = reachablePos[:i]
+            break
+    return reachablePos[-1] if (reachablePos != [] and reachablePos != startPos) else 0xff
 
 # 許可要求への判断。許可できる場合は許可の出力をする一方で、許可できない場合は何もしない。
 def permitJudge():
@@ -125,7 +126,6 @@ def permitJudge():
         permitted = False   # 許可を出す場合はこれをTrueにする、ひとつ許可が出たらこの関数は終了して次のループの呼び出しでまたこの関数が実行される。
         fromID = requestQueue[i]
         if request[fromID] == 0x01: # 移動許可要求
-            permitDestPos = 0xff    # 許可する目的地のバッファ（destPosにすぐ代入されるため表示等不要）
             # 許可判断
             # ゴールゾーンでどのゴールに行くか判断する必要あり、ゴール内での移動でデッドロックにならないように、などなど
             # 基本的には奥からボールを入れていくが、相手がボールをシュートしに来ている場合は手前から行う。
@@ -133,80 +133,96 @@ def permitJudge():
             # 1周目はまず一番遠いゴール、次に一番近いゴールを見る。
             # 2周目は本当は移動中にゴールゾーンが解放される可能性も考慮したほうがいいか？
             occupiedPos = occupiedJudge(fromID)
+            requestDestPosList = []
             if fromID == 0: # 1号機（奥回りルート）
-                if requestDestPos[i] == 0x00:   # スタート地点に向かう場合
-                    for j in range(pos[i] - 1, 0x01 - 1, -1):
-                        if j in occupiedPos:
-                            if permitDestPos == pos[i]:
-                                permitDestPos = j + 1
-                                permitted = True
-                            else:
-                                permitted = False
-                            break
-#### 以下関数とかにまとめる
-                elif requestDestPos[i] == 0x51:   # ボールをどこかのゴールに捨てたい（ゴールゾーンに向かうのも含む）場合
+                if requestDestPos[i] == 0x51:   # ボールをどこかのゴールに捨てたい（ゴールゾーンに向かうのも含む）場合
                     if pos[i] <= 0x05 and pos[i] >= 0x01:  # ゴールゾーン内にいる場合：一番近いゴールに捨てに行く
-                        if pos[i] == 0x01:  # 赤色ゴールにいる場合：すれ違わない以上2号機から離れていくので占有の調査は不要
+                        if pos[i] == 0x01:  # 赤色ゴールにいる場合
                             if ballStatus[i]["y"] != 0:
-                                permitDestPos = 0x03
-                                permitted = True
-                            elif ballStatus[i]["b"] != 0:
-                                permitDestPos = 0x05
-                                permitted = True
-                        elif pos[i] == 0x03:    # 黄色ゴールにいる場合：次に近いゴールへ
-                            if ballStatus[i]["r"] != 0: # 赤色ゴールに向かう場合は占有の調査が必要
-                                if (occupiedPos & set(range(0x01, 0x02 + 1))) == ():  # 一番近いゴールまでの経路上に占有された場所がない
-                                    permitDestPos = 0x01
-                                    permitted = True
-                                else:
-                                    permitted = False
-                            elif ballStatus[i]["b"] != 0:   # 青色ゴールに向かう場合は占有の調査は不要
-                                permitDestPos = 0x05
-                                permitted = True
-                        elif pos[i] == 0x05:    # 青色ゴールにいる場合：2号機に近づくため、占有の調査が必要
+                                requestDestPosList.append(0x03)
+                            if ballStatus[i]["b"] != 0:
+                                requestDestPosList.append(0x05)
+
+                        elif pos[i] == 0x03:    # 黄色ゴールにいる場合
+                            if ballStatus[i]["r"] != 0:
+                                requestDestPosList.append(0x01)
+                            if ballStatus[i]["b"] != 0:
+                                requestDestPosList.append(0x05)
+                                
+                        elif pos[i] == 0x05:    # 青色ゴールにいる場合
                             if ballStatus[i]["y"] != 0: # 黄色ゴールに向かう
-                                if (occupiedPos & set(range(0x03, 0x04 + 1))) == ():  # 一番近いゴールまでの経路上に占有された場所がない
-                                    permitDestPos = 0x03
-                                    permitted = True
-                                else:
-                                    permitted = False
-                            elif ballStatus[i]["r"] != 0:   # 赤色ゴールに向かう
-                                if (occupiedPos & set(range(0x01, 0x04 + 1))) == ():  # 一番近いゴールまでの経路上に占有された場所がない
-                                    permitDestPos = 0x01
-                                    permitted = True
-                                else:
-                                    permitted = False
+                                requestDestPosList.append(0x03)
+                            if ballStatus[i]["r"] != 0:   # 赤色ゴールに向かう
+                                requestDestPosList.append(0x01)
                         
                     else:  # ゴールゾーンの外にいる場合：一番遠いゴールに向かうが、途中で占有されている場合は一番近いゴールまで向かう
-                        if ballStatus[i]["r"] != 0:
-                            if (occupiedPos & set(range(0x01, pos[i] + 1))) == ():  # 一番遠いゴールまでの経路上に占有された場所がない
-                                permitDestPos = 0x01
-                                permitted = True
-                            else:   # 一番遠いゴールまでの経路上に占有された場所がある：一番近いゴールに向かう
-                                destBuff = 0xff # 一番近いゴールの位置
-                                if ballStatus[i]["b"] != 0:
-                                    destBuff = 0x05
-                                elif ballStatus[i]["y"] != 0:
-                                    destBuff = 0x03
-                                else:
-                                    destBuff = 0x01
-                                if (occupiedPos & set(range(0x01, destBuff + 1))) == ():  # 一番近いゴールまでに占有された場所がない
-                                    permitDestPos = destBuff
-                                    permitted = True
-                                else:   # 一番近いゴールまでの経路上に占有された場所がある：その手前のゾーンまで向かう
-                                    # タプル"occupiedPos"の中で0x08、0x09を除いた最大値を取り出す
-                                    maxBuff = 0x00
-                                    for j in occupiedPos:
-                                        if j != 0x08 and j != 0x09 and j > maxBuff:
-                                            maxBuff = j
-                                    
-                                    permitDestPos = maxBuff + 1 # 行ける場所まで許可
-                                    permitted = True
-                                
-#### ここから下がまだ
+                        if ballStatus[i]["r"] != 0: # 赤色ボールを持っている場合
+                            requestDestPosList.append(0x01)
+                        elif ballStatus[i]["y"] != 0:   # 赤色ボールを持っていないが黄色ボールを持っている場合
+                            requestDestPosList.append(0x03)
+                        if ballStatus[i]["b"] != 0: # 青色ボールを持っている場合（青色ボールのみor他の色のボールを持っているが最も近い青色ゴールも候補）
+                            requestDestPosList.append(0x05)
+                        elif ballStatus[i]["y"] != 0 and ballStatus[i]["r"] != 0:   # 黄色ボールと赤色ボールを持っている場合：一番近いのが黄色ゴール
+                            requestDestPosList.append(0x03)
+                
+                elif requestDestPos[i] == 0x52: # ボールゾーン
+                    requestDestPosList.append(0x07)
+                
+                else:
+                    requestDestPosList.append(requestDestPos[i])
+
             elif fromID == 1:   # 2号機（手前回りルート）
-                permitted = True
+                if requestDestPos[i] == 0x51:   # ボールをどこかのゴールに捨てたい（ゴールゾーンに向かうのも含む）場合
+                    if pos[i] <= 0x05 and pos[i] >= 0x01:  # ゴールゾーン内にいる場合：一番近いゴールに捨てに行く
+                        if pos[i] == 0x01:  # 赤色ゴールにいる場合
+                            if ballStatus[i]["y"] != 0:
+                                requestDestPosList.append(0x03)
+                            if ballStatus[i]["b"] != 0:
+                                requestDestPosList.append(0x05)
+
+                        elif pos[i] == 0x03:    # 黄色ゴールにいる場合
+                            if ballStatus[i]["b"] != 0:
+                                requestDestPosList.append(0x05)
+                            if ballStatus[i]["r"] != 0:
+                                requestDestPosList.append(0x01)
+                                
+                        elif pos[i] == 0x05:    # 青色ゴールにいる場合
+                            if ballStatus[i]["y"] != 0: # 黄色ゴールに向かう
+                                requestDestPosList.append(0x03)
+                            if ballStatus[i]["r"] != 0:   # 赤色ゴールに向かう
+                                requestDestPosList.append(0x01)
+                        
+                    else:  # ゴールゾーンの外にいる場合：一番遠いゴールに向かうが、途中で占有されている場合は一番近いゴールまで向かう
+                        if ballStatus[i]["b"] != 0: # 青色ボールを持っている場合（青色ボールのみor他の色のボールを持っているが最も近い青色ゴールも候補）
+                            requestDestPosList.append(0x05)
+                        elif ballStatus[i]["y"] != 0:   # 赤色ボールを持っていないが黄色ボールを持っている場合
+                            requestDestPosList.append(0x03)
+                        if ballStatus[i]["r"] != 0: # 赤色ボールを持っている場合
+                            requestDestPosList.append(0x01)
+                        elif ballStatus[i]["y"] != 0 and ballStatus[i]["r"] != 0:   # 黄色ボールと赤色ボールを持っている場合：一番近いのが黄色ゴール
+                            requestDestPosList.append(0x03)
+                
+                elif requestDestPos[i] == 0x52: # ボールゾーン
+                    requestDestPosList.append(0x09)
+                
+                else:
+                    requestDestPosList.append(requestDestPos[i])
             
+            permitDestPos = 0xff    # 許可する目的地のバッファ（destPosにすぐ代入されるため表示等不要）
+            reachableDestPosBuff = 0xff # 近くまで行くことができる場合の目的地バッファ、直接目的地に行ける場合はそちらが優先される。
+            for j in range(len(requestDestPosList)):
+                destPosBuff = reachablePos(fromID, pos[i], requestDestPosList[j])
+                if destPosBuff == requestDestPosList[j]:
+                    permitDestPos = destPosBuff
+                    permitted = True
+                    break
+                elif destPosBuff != 0xff and reachableDestPosBuff == 0xff:  # 近くまで行ける場所が見つかって、まだ「近くまで行くことができる場所」が見つかっていない場合
+                    reachableDestPosBuff = destPosBuff
+                    permitted = True
+            
+            if permitDestPos == 0xff and reachableDestPosBuff != 0xff:
+                permitDestPos = reachableDestPosBuff
+
             if permitted:
                 permit[fromID] = 0x01
                 destPos[fromID] = permitDestPos
