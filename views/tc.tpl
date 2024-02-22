@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>World Clock</title>
+    <title>Overture by Team mako-robo 管理コンソール</title>
 </head>
 <body>
     <h2>Overture by Team mako-robo 管理コンソール</h2>
@@ -21,7 +21,7 @@
                 <div class = "robot-pos">現在地：<span></span></div>
                 <div class = "robot-dest-pos">目的地：<span></span></div>
                 <div class = "robot-act">現在の行動：<span></span></div>
-                <div class = "robot-ball">ボール状況：赤<span></span>個、黄<span></span>個、青<span></span>個</div>
+                <div class = "robot-ball">ボール状況：赤<span class = "r"></span>個、黄<span class = "y"></span>個、青<span class = "b"></span>個</div>
                 <div class = "robot-request">現在の許可要求：<span></span></div>
                 <div class = "robot-act">現在の許可要求の目的地：<span></span></div>
                 <div class = "robot-permit">直近の許可内容：<span></span></div>
@@ -73,14 +73,16 @@
 
                 for (let i = 0; i < dict["robot_num"]; i++) {
                     let robot = dict["robot"];
-                    $(".robot-container").eq(i).find(".robot-twe-id").html("TWE-LITE アドレス：" + robot["tweAddr"][i]);
-                    $(".robot-container").eq(i).find(".robot-pos").html("現在地：" + robot["pos"][i]);
-                    $(".robot-container").eq(i).find(".robot-dest-pos").html("目的地：" + robot["destPos"][i]);
-                    $(".robot-container").eq(i).find(".robot-act").html("現在の行動：" + robot["act"][i]);
-                    $(".robot-container").eq(i).find(".robot-ball").html("ボール状況：赤" + robot["ballStatus"][i]["r"] + "個、黄" + robot["ballStatus"][i]["y"] + "個、青" + robot["ballStatus"][i]["b"] + "個");
-                    $(".robot-container").eq(i).find(".robot-request").html("現在の許可要求：" + robot["request"][i]);
-                    $(".robot-container").eq(i).find(".robot-act").html("現在の許可要求の目的地：" + robot["requestDestPos"][i]);
-                    $(".robot-container").eq(i).find(".robot-permit").html("直近の許可内容：" + robot["permit"][i]);
+                    $(".robot-container").eq(i).find(".robot-twe-id").find("span").html(robot["tweAddr"][i]);
+                    $(".robot-container").eq(i).find(".robot-pos").find("span").html(robot["pos"][i]);
+                    $(".robot-container").eq(i).find(".robot-dest-pos").find("span").html(robot["destPos"][i]);
+                    $(".robot-container").eq(i).find(".robot-act").find("span").html(robot["act"][i]);
+                    $(".robot-container").eq(i).find(".robot-ball").find("span.r").html(robot["ballStatus"][i]["r"]);
+                    $(".robot-container").eq(i).find(".robot-ball").find("span.y").html(robot["ballStatus"][i]["y"]);
+                    $(".robot-container").eq(i).find(".robot-ball").find("span.b").html(robot["ballStatus"][i]["b"]);
+                    $(".robot-container").eq(i).find(".robot-request").find("span").html(robot["request"][i]);
+                    $(".robot-container").eq(i).find(".robot-act").find("span").html(robot["requestDestPos"][i]);
+                    $(".robot-container").eq(i).find(".robot-permit").find("span").html(robot["permit"][i]);
                 }
             }).fail(function() {
                 console.log("失敗");

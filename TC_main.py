@@ -6,7 +6,7 @@ import threading
 
 import serial.tools.list_ports
 import json, datetime
-from bottle import route, run, template
+from bottle import route, run, template, static_file
 import twelite
 
 WINDOW_MODE = False  # ウィンドウモードかどうか
@@ -133,7 +133,6 @@ def permitJudge():
             # ゴールゾーン関連
             # 1周目はまず一番遠いゴール、次に一番近いゴールを見る。
             # 2周目は本当は移動中にゴールゾーンが解放される可能性も考慮したほうがいいか？
-            occupiedPos = occupiedJudge(fromID)
             requestDestPosList = []
             if fromID == 0: # 1号機（奥回りルート）
                 if requestDestPos[i] == 0x51:   # ボールをどこかのゴールに捨てたい（ゴールゾーンに向かうのも含む）場合
@@ -391,6 +390,11 @@ init()
 # 管制プログラムの起動（受信した信号に対して送信するパッシブなものなので常に動かす）
 threadTC = threading.Thread(target=TCDaemon, daemon=True)
 threadTC.start()
+
+# Bottleの設定
+#@route('/static/<filename>')
+#def server_static(filename):
+#    return static_file(filename, root='./static/')
 
 @route('/')
 def index():
