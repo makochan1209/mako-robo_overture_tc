@@ -7,6 +7,8 @@ import serial
 import threading
 
 import serial.tools.list_ports
+import json, datetime
+from bottle import route, run, template
 import twelite
 
 WINDOW_MODE = False  # ウィンドウモードかどうか
@@ -37,13 +39,14 @@ nearerRoutePos = [0x08, 0x09]   # 手前回りルートの場所コード
 
 twe = None
 ser = None
+use_port = None
 
 pauseTC = False # 管制プログラムの一時停止
 
 labelR = []
 
 def init():
-    global ser, twe
+    global ser, twe, use_port
     # 初期化
     use_port = twelite.twe_serial_ports_detect()
 
@@ -122,7 +125,7 @@ def reachablePos(fromID, startPos, goalPos):
 
 # 許可要求への判断。許可できる場合は許可の出力をする一方で、許可できない場合は何もしない。
 def permitJudge():
-    for i in len(requestQueue):
+    for i in range(len(requestQueue)):
         permitted = False   # 許可を出す場合はこれをTrueにする、ひとつ許可が出たらこの関数は終了して次のループの呼び出しでまたこの関数が実行される。
         fromID = requestQueue[i]
         if request[fromID] == 0x01: # 移動許可要求
@@ -325,27 +328,11 @@ def compEmgStop():
     pauseTC = False
 
 # 画面制御（上の情報を表示する）
-def windowDaemon():
-    if WINDOW_MODE:
-        labelTime.configure(text=time.strftime('%Y/%m/%d %H:%M:%S'))
-
-    configureTextBuf = ""
-    for i in range(ROBOT_NUM):
-        if connectStatus[i]:
-            configureTextBuf = str(i + 1) + "号機\n\n" + "接続状態: " + "接続済（TWELITEアドレス: " + hex(tweAddr[i]) + "）\n\n現在地: " + hex(pos[i]) + "\n目的地: " + hex(destPos[i]) + "\n現在の行動: " + actText[act[i]] + "\nボール状況: 赤" + str(ballStatus[i]["r"]) + "個、黄" + str(ballStatus[i]["y"]) + "個、青" + str(ballStatus[i]["b"]) + "個\n直近要求内容: " + requestText[request[i]] + "\n直近要求内容の目的地: " + hex(requestDestPos[i]) + "\n直近許可内容: " + permitText[permit[i]] 
-        else:
-            configureTextBuf = str(i + 1) + "号機\n\n" + "接続状態: " + "未接続"
-
-        if WINDOW_MODE:
-            labelR[i].configure(text=configureTextBuf)
-        #else:
-        #    print(configureTextBuf)
-
-    if WINDOW_MODE:
-        mainWindow.after(50, windowDaemon)
-    else:
-        time.sleep(1)
-        windowDaemon()
+#    for i in range(ROBOT_NUM):
+#        if connectStatus[i]:
+#            configureTextBuf = str(i + 1) + "号機\n\n" + "接続状態: " + "接続済（TWELITEアドレス: " + hex(tweAddr[i]) + "）\n\n現在地: " + hex(pos[i]) + "\n目的地: " + hex(destPos[i]) + "\n現在の行動: " + actText[act[i]] + "\nボール状況: 赤" + str(ballStatus[i]["r"]) + "個、黄" + str(ballStatus[i]["y"]) + "個、青" + str(ballStatus[i]["b"]) + "個\n直近要求内容: " + requestText[request[i]] + "\n直近要求内容の目的地: " + hex(requestDestPos[i]) + "\n直近許可内容: " + permitText[permit[i]] 
+#        else:
+#            configureTextBuf = str(i + 1) + "号機\n\n" + "接続状態: " + "未接続"
 
 # ロボット本体との接続
 def connect():
@@ -389,24 +376,7 @@ def exitTCApp():
     global pauseTC
     pauseTC = True
     ser.close()
-    if WINDOW_MODE:
-        mainWindow.destroy()
     exit()
-
-# ウィンドウモードでのキー待機
-def windowKeyPress(event):
-    # Enterのとき
-    if event.keycode == 13:
-        compStart()
-    # Numkey 1のとき
-    elif event.keycode == 97:
-        connect()
-    # Numkey 2のとき
-    elif event.keycode == 98:
-        compEmgStop()
-    # Numkey 9のとき
-    elif event.keycode == 105:
-        exitTCApp()
 
 def terminalKeyPressWait():
     while True:
@@ -427,59 +397,20 @@ def terminalKeyPressWait():
 # 以下メインルーチン
 init()
 
-mode = input("ウィンドウモードは1を入力してEnter: ")
-
-if mode == '1':
-    WINDOW_MODE = True
-
 # 管制プログラムの起動（受信した信号に対して送信するパッシブなものなので常に動かす）
 threadTC = threading.Thread(target=TCDaemon, daemon=True)
 threadTC.start()
-fromID = 0
 
-# ウィンドウ表示モード
-if WINDOW_MODE:
-    # ウィンドウの定義
-    mainWindow = tk.Tk()
-    mainWindow.title ('Main Window')
-    mainWindow.geometry('800x800')
+@route('/')
+def ajax():
+    return template('tc')
 
-    # グリッドの定義
-    mainFrame = tk.Frame(mainWindow)
-    mainFrame.grid(column=0, row=0)
+@route('/update')
+def ajax_update():
+    dt = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    dict = {'dt': dt, 'serial': use_port}
+    return json.dumps(dict)
 
-    # タイトル
-    labelTitle = tk.Label(mainWindow, text='Overture by Team mako-robo\n管制ウィンドウ')
-    labelTitle.grid(row=0,column=0,columnspan=2)
-    labelTime = tk.Label(mainWindow, text='')
-    labelTime.grid(row=1,column=0,columnspan=2)
-
-    # ウィンドウの構成
-    for fromID in range(ROBOT_NUM):
-        labelR.append(tk.Label(mainWindow, text=(str(fromID + 1) + "号機"), anchor=tk.N, width=GRID_WIDTH, height=GRID_HEIGHT))
-        labelR[fromID].grid(row=2 + int(fromID / 2),column=(fromID % 2))
-    
-    buttonConnect = tk.Button(mainWindow, text = "通信接続 (Num 1)", command = connect)
-    buttonConnect.grid(row=2 + int(ROBOT_NUM / 2) + ROBOT_NUM % 2,column=0,columnspan=2)
-
-    buttonStart = tk.Button(mainWindow, text = "競技開始 (Enter)", command = compStart)
-    buttonStart.grid(row=3 + int(ROBOT_NUM / 2) + ROBOT_NUM % 2,column=0,columnspan=2)
-    buttonEmgStop = tk.Button(mainWindow, text = "全ロボット緊急停止 (Num 2)", command = compEmgStop)
-    buttonEmgStop.grid(row=4 + int(ROBOT_NUM / 2) + ROBOT_NUM % 2,column=0,columnspan=2)
-
-    buttonExit = tk.Button(mainWindow, text = "プログラム終了 (Num 9)", command = exitTCApp)
-    buttonExit.grid(row=5 + int(ROBOT_NUM / 2) + ROBOT_NUM % 2,column=0,columnspan=2)
-
-    # キー待機部分
-    mainWindow.bind("<KeyPress>", windowKeyPress)
-
-    # 表示更新スレッド開始
-    threadWindow = threading.Thread(target=windowDaemon, daemon=True)
-    threadWindow.start()
-    mainWindow.mainloop()
-
-# ターミナルモード
-else:
-    print("管制システムは既に起動しています")
-    # キー待機部分
-    terminalKeyPressWait()
+# 最後に実行
+if __name__ == '__main__':
+    run(host = 'localhost', port = 5678)

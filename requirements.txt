@@ -1,6 +1,7 @@
 ansicon==1.89.0
 appdirs==1.4.4
 blessed==1.20.0
+bottle==0.12.25
 flyingcircus==0.1.4.1
 jinxed==1.2.1
 packaging==23.2

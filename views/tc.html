@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>World Clock</title>
+</head>
+<body>
+    <h1>Hello!</h1>
+    <div id = "time"></div>
+    <div>シリアルポート：<span id = "serial"></span></div>
+    <script type="text/javascript">
+        function updateDOM() {
+            $.ajax("/update", {
+                type: "get"
+            }).done(function(received_data) {           // 戻ってきたのはJSON（文字列）
+                let dict = JSON.parse(received_data);   // JSONを連想配列にする
+                // 以下、Javascriptで料理する
+                let dt = dict["dt"];
+                let serial = dict["serial"];
+                $("#time").html(dt);              // html要素を書き換える
+                $("#serial").html(serial);              // html要素を書き換える
+            }).fail(function() {
+                console.log("失敗");
+            });
+        };
+        updateDOM();
+        setInterval(updateDOM, 100);
+    </script>
+</body>
+</html>
