@@ -394,33 +394,28 @@ def terminalKeyPressWait():
             print("無効な入力です")
         # time.sleep(0.5)
 
-def bottleServer():
-    @route('/')
-    def ajax():
-        return template('tc')
-
-    @route('/update')
-    def ajax_update():
-        dt = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        dict = {'dt': dt, 'serial': use_port}
-        return json.dumps(dict)
-
-    @route('/connect')
-    def ajax_connect():
-        connect()
-        return "connected"
-    # 最後に実行
-    if __name__ == '__main__':
-        run(host = 'localhost', port = 5678)
-
 # 以下メインルーチン
 init()
 
 # 管制プログラムの起動（受信した信号に対して送信するパッシブなものなので常に動かす）
 threadTC = threading.Thread(target=TCDaemon, daemon=True)
 threadTC.start()
-threadBottle = threading.Thread(target=bottleServer, daemon=True)
-threadBottle.start()
 
-while True:
-    time.sleep(1)
+@route('/')
+def ajax():
+    return template('tc')
+
+@route('/update')
+def ajax_update():
+    dt = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    dict = {'dt': dt, 'serial': use_port}
+    return json.dumps(dict)
+
+@route('/connect')
+def ajax_connect():
+    connect()
+    return "connected"
+
+# 最後に実行
+if __name__ == '__main__':
+    run(host = 'localhost', port = 5678)
