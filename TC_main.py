@@ -402,7 +402,7 @@ threadTC = threading.Thread(target=TCDaemon, daemon=True)
 threadTC.start()
 
 @route('/')
-def ajax():
+def index():
     return template('tc')
 
 @route('/update')
@@ -415,6 +415,16 @@ def ajax_update():
 def ajax_connect():
     connect()
     return "connected"
+
+@route('/emgStop')
+def ajax_emgStop():
+    compEmgStop()
+    return "emgStop"
+
+@route('/start')
+def ajax_start():
+    compStart()
+    return "start"
 
 # 最後に実行
 if __name__ == '__main__':

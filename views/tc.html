@@ -11,10 +11,30 @@
     <h1>Hello!</h1>
     <div id = "time"></div>
     <div>シリアルポート：<span id = "serial"></span></div>
-    <div><button onclick = "connect()">1: 接続</button></div>
+    <div><button onclick = "connect()">1: ロボットと接続</button><button onclick = "emgStop()">2: 全ロボット緊急停止</button><button onclick = "start()">3: 競技開始</button></div>
     <script type="text/javascript">
         function connect() {
             $.ajax("/connect", {
+                type: "get"
+            }).done(function(received_data) {
+                console.log(received_data);
+            }).fail(function() {
+                console.log("失敗");
+            });
+        }
+
+        function emgStop() {
+            $.ajax("/emgStop", {
+                type: "get"
+            }).done(function(received_data) {
+                console.log(received_data);
+            }).fail(function() {
+                console.log("失敗");
+            });
+        }
+
+        function start() {
+            $.ajax("/start", {
                 type: "get"
             }).done(function(received_data) {
                 console.log(received_data);
