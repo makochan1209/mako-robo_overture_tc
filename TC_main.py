@@ -411,6 +411,11 @@ def ajax_update():
     dict = {'dt': dt, 'serial': use_port}
     return json.dumps(dict)
 
+@route('/connect')
+def ajax_connect():
+    connect()
+    return "connected"
+
 # 最後に実行
 if __name__ == '__main__':
     run(host = 'localhost', port = 5678)
