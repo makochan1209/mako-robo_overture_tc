@@ -17,7 +17,7 @@ GRID_HEIGHT = 10
 
 ROBOT_NUM = 2    # ロボットの台数（1台から6台に対応、2台と6台のみ動作確認）
 
-tweAddr = []  # 各機のTWELITEのアドレス（TWELITE交換に対応）
+tweAddr = []  # 各機のTWELITEのアドレス（TWELITE交換に対応）、0xffは未接続
 
 pos = [] # ロボットの位置
 destPos = [] # ロボットの行き先
@@ -27,7 +27,7 @@ requestDestPos = [] # ロボットの許可要求内容における目的地（�
 requestQueue = [] # ロボットの許可要求の順序キュー
 permit = [] # ロボットの直近許可内容
 ballStatus = [] # ボール取得個数、ロボットごとの配列で、その中の各値は連想配列（r, g, b）で管理
-connectStatus = []  # 接続できているか
+searchNum = []  # 探索回数
 
 actText = ["待機中", "走行中", "ボール探索中（未発見、LiDARなし）", "ボール探索中（未発見、LiDARあり）", "ボール探索中（発見済、LiDARなし）", "ボール探索中（発見済、LiDARあり）", "ボールキャッチ", "ボールシュート"]
 requestText = ["", "移動許可要求", "", "ボール探索（未発見）LiDAR照射許可要求", "", "ボール探索（発見済）LiDAR照射許可要求", "ボールキャッチ許可要求", "ボールシュート許可要求"]
@@ -45,7 +45,7 @@ pauseTC = False # 管制プログラムの一時停止
 labelR = []
 
 def init():
-    global use_port, ser, twe, tweAddr, pos, destPos, act, request, requestDestPos, permit, ballStatus, connectStatus, threadTC
+    global use_port, ser, twe, tweAddr, pos, destPos, act, request, requestDestPos, permit, ballStatus, threadTC, searchNum
     
     #if use_port is not None:
         #ser.close()
@@ -60,7 +60,7 @@ def init():
     requestDestPos = []
     permit = []
     ballStatus = []
-    connectStatus = []
+    searchNum = []
     
     for i in range(ROBOT_NUM):
         tweAddr.append(0xff)
@@ -71,7 +71,7 @@ def init():
         requestDestPos.append(0xff)
         permit.append(0xff)
         ballStatus.append({"r": 0, "y": 0, "b": 0})
-        connectStatus.append(False)
+        searchNum.append(0)
 
 def connectSerial():
     global ser, use_port, twe, threadTC
@@ -250,6 +250,23 @@ def permitJudge():
                 requestDestPos[fromID] = 0xff
                 print("移動許可、目的地: " + hex(destPos[fromID]))
                 twe.sendTWE(tweAddr[fromID], 0x50, [permit[fromID], destPos[fromID]]) # 許可を返信
+        elif request[fromID] == 0x02:   # ボール探索許可要求、探索個数
+            global searchNum
+            ballNum = 0
+            searchNum[fromID] += 1
+            if searchNum[fromID] == 1:  # 1周目
+                if fromID == 0: # 1号機（奥回りルート）
+                    ballNum = 4
+                elif fromID == 1:   # 2号機（手前回りルート）
+                    ballNum = 3 # 手前の3個を取り切る
+            elif searchNum[fromID] == 2:    # 2周目
+                if fromID == 0: # 1号機（奥回りルート）
+                    ballNum = 4
+                elif fromID == 1:   # 2号機（手前回りルート）
+                    ballNum = 4
+
+            permit[fromID] = 0x02
+            twe.sendTWE(tweAddr[fromID], 0x50, [permit[fromID], ballNum]) # 許可を返信
 
         elif request[fromID] == 0x03 or request[fromID] == 0x05: # ボール探索LiDAR照射許可要求
             # 許可判断
@@ -332,10 +349,15 @@ def TCDaemon():
 
 # ボタン操作からの管制への反映
 def compStart():
+    connectedNum = 0    # 接続済機体数のカウント
+    for i in range(ROBOT_NUM):
+        if tweAddr[i] != 0xff:
+            connectedNum += 1
+
     global pauseTC
     pauseTC = True
     print("start")
-    twe.sendTWE(tweAddr[0], 0x71, [0x00]) # 2台ともに競技開始を通知
+    twe.sendTWE(tweAddr[0], 0x71, [0x00, 0x00 if connectedNum == 2 else 0x01]) # 2台ともに競技開始を通知、2台の場合は協調モード、1台の場合は単独モード
     pauseTC = False
 
 def compEmgStop():
@@ -352,7 +374,7 @@ def connect():
     pauseTC = True  # TCの一時停止
     
     for i in range(ROBOT_NUM):  # 1台ずつ接続
-        if not connectStatus[i]:    # 未接続のとき
+        if tweAddr[i] == 0xff:    # 未接続のとき
             print("Connecting: " + str(i + 1))
             timeData = time.localtime()
             twe.sendTWE(0x78, 0x70, [i + 1, timeData.tm_year - 2000, timeData.tm_mon, timeData.tm_mday, timeData.tm_hour, timeData.tm_min, timeData.tm_sec])
@@ -366,7 +388,6 @@ def connect():
                             print("Connected: " + str(i + 1))
                             print("TWELITE address: " + hex(tweResult.address))
                             print()
-                            connectStatus[i] = True
                             tweAddr[i] = tweResult.address
                             break
                         else:
@@ -416,7 +437,6 @@ def ajax_update():
             'requestDestPos': requestDestPos,
             'permit': permit,
             'ballStatus': ballStatus,
-            'connectStatus': connectStatus,
             'actText': actText,
             'requestText': requestText,
             'permitText': permitText,
