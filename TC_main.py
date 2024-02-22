@@ -325,13 +325,6 @@ def compEmgStop():
     twe.sendTWE(tweAddr[0], 0x71, [0xff])
     pauseTC = False
 
-# 画面制御（上の情報を表示する）
-#    for i in range(ROBOT_NUM):
-#        if connectStatus[i]:
-#            configureTextBuf = str(i + 1) + "号機\n\n" + "接続状態: " + "接続済（TWELITEアドレス: " + hex(tweAddr[i]) + "）\n\n現在地: " + hex(pos[i]) + "\n目的地: " + hex(destPos[i]) + "\n現在の行動: " + actText[act[i]] + "\nボール状況: 赤" + str(ballStatus[i]["r"]) + "個、黄" + str(ballStatus[i]["y"]) + "個、青" + str(ballStatus[i]["b"]) + "個\n直近要求内容: " + requestText[request[i]] + "\n直近要求内容の目的地: " + hex(requestDestPos[i]) + "\n直近許可内容: " + permitText[permit[i]] 
-#        else:
-#            configureTextBuf = str(i + 1) + "号機\n\n" + "接続状態: " + "未接続"
-
 # ロボット本体との接続
 def connect():
     # buttonConnect.grid_forget()
@@ -401,7 +394,7 @@ threadTC.start()
 
 @route('/')
 def index():
-    return template('tc')
+    return template('tc', ROBOT_NUM = ROBOT_NUM)
 
 @route('/update')
 def ajax_update():
