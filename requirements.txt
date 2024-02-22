@@ -6,7 +6,6 @@ flyingcircus==0.1.4.1
 jinxed==1.2.1
 packaging==23.2
 pyserial==3.5
-pytk==0.0.2.1
 setuptools==69.1.0
 setuptools-scm==8.0.4
 six==1.16.0
