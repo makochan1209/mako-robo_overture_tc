@@ -72,16 +72,16 @@ def init():
         permit.append(0xff)
         ballStatus.append({"r": 0, "y": 0, "b": 0})
         connectStatus.append(False)
-    
-    # 管制プログラムの起動（受信した信号に対して送信するパッシブなものなので常に動かす）
-    threadTC = threading.Thread(target=TCDaemon, daemon=True)
-    threadTC.start()
 
 def connectSerial():
     global ser, use_port, twe, threadTC
     use_port = twelite.twe_serial_ports_detect()
     ser = serial.Serial(use_port)
     twe = twelite.TWELITE(ser)
+    
+    # 管制プログラムの起動（受信した信号に対して送信するパッシブなものなので常に動かす）
+    threadTC = threading.Thread(target=TCDaemon, daemon=True)
+    threadTC.start()
 
 # [0xA5, 0x5A, 0x80, "Length", "Data", "CD", 0x04]の形式で受信
 # "Data": 0x0*（送信元）, Command, Data
@@ -404,7 +404,25 @@ def index():
 @route('/update')
 def ajax_update():
     dt = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    dict = {'dt': dt, 'serial': use_port, 'robot_num': ROBOT_NUM, 'robot': {'pos': pos, 'destPos': destPos, 'act': act, 'request': request, 'requestDestPos': requestDestPos, 'permit': permit, 'ballStatus': ballStatus, 'connectStatus': connectStatus, 'actText': actText, 'requestText': requestText, 'permitText': permitText, 'tweAddr': tweAddr}}
+    dict = {
+        'dt': dt,
+        'serial': use_port,
+        'robot_num': ROBOT_NUM,
+        'robot': {
+            'pos': pos,
+            'destPos': destPos,
+            'act': act,
+            'request': request,
+            'requestDestPos': requestDestPos,
+            'permit': permit,
+            'ballStatus': ballStatus,
+            'connectStatus': connectStatus,
+            'actText': actText,
+            'requestText': requestText,
+            'permitText': permitText,
+            'tweAddr': tweAddr
+        }
+    }
     return json.dumps(dict)
 
 @route('/initTC')
