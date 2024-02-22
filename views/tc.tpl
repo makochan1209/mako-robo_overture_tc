@@ -28,8 +28,35 @@
             </div>
         % end
     </div>
-    <div><button onclick = "connect()">1: ロボットと接続</button><button onclick = "emgStop()">2: 全ロボット緊急停止</button><button onclick = "start()">3: 競技開始</button></div>
+    <div>
+        <button onclick = "connectSerial()">1: シリアルポートと接続</button>
+        <button onclick = "connect()">2: ロボットと接続</button>
+        <button onclick = "emgStop()">3: 全ロボット緊急停止</button>
+        <button onclick = "start()">4: 競技開始</button>
+        <!--<button onclick = "exitTC()">9: プログラム終了</button>-->
+        <button onclick = "initTC()">0: プログラムのリセット（動作不調時のみ、シリアルポートはリセットされない）</button>
+    </div>
     <script type="text/javascript">
+        function initTC() {
+            $.ajax("/initTC", {
+                type: "get"
+            }).done(function(received_data) {
+                console.log(received_data);
+            }).fail(function() {
+                console.log("失敗");
+            });
+        }
+
+        function connectSerial() {
+            $.ajax("/connect-serial", {
+                type: "get"
+            }).done(function(received_data) {
+                console.log(received_data);
+            }).fail(function() {
+                console.log("失敗");
+            });
+        }
+
         function connect() {
             $.ajax("/connect", {
                 type: "get"
@@ -59,7 +86,17 @@
                 console.log("失敗");
             });
         }
-        
+
+        function exitTC() {
+            $.ajax("/exit", {
+                type: "get"
+            }).done(function(received_data) {
+                console.log(received_data);
+            }).fail(function() {
+                console.log("失敗");
+            });
+        }
+
         function updateDOM() {
             $.ajax("/update", {
                 type: "get"

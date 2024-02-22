@@ -39,20 +39,31 @@ twe = None
 ser = None
 use_port = None
 
+threadTC = None
 pauseTC = False # 管制プログラムの一時停止
 
 labelR = []
 
 def init():
-    global ser, twe, use_port
+    global use_port, ser, twe, tweAddr, pos, destPos, act, request, requestDestPos, permit, ballStatus, connectStatus, threadTC
+    
+    #if use_port is not None:
+        #ser.close()
+        #use_port = None
+    
     # 初期化
-    use_port = twelite.twe_serial_ports_detect()
-
-    ser = serial.Serial(use_port)
-    twe = twelite.TWELITE(ser)
-
+    tweAddr = []
+    pos = []
+    destPos = []
+    act = []
+    request = []
+    requestDestPos = []
+    permit = []
+    ballStatus = []
+    connectStatus = []
+    
     for i in range(ROBOT_NUM):
-        tweAddr.append(0x01 + i)   # 初期値
+        tweAddr.append(0xff)
         pos.append(0xff)
         destPos.append(0xff)
         act.append(0xff)
@@ -61,6 +72,16 @@ def init():
         permit.append(0xff)
         ballStatus.append({"r": 0, "y": 0, "b": 0})
         connectStatus.append(False)
+    
+    # 管制プログラムの起動（受信した信号に対して送信するパッシブなものなので常に動かす）
+    threadTC = threading.Thread(target=TCDaemon, daemon=True)
+    threadTC.start()
+
+def connectSerial():
+    global ser, use_port, twe, threadTC
+    use_port = twelite.twe_serial_ports_detect()
+    ser = serial.Serial(use_port)
+    twe = twelite.TWELITE(ser)
 
 # [0xA5, 0x5A, 0x80, "Length", "Data", "CD", 0x04]の形式で受信
 # "Data": 0x0*（送信元）, Command, Data
@@ -368,28 +389,8 @@ def exitTCApp():
     ser.close()
     exit()
 
-def terminalKeyPressWait():
-    while True:
-        print("1: 通信接続、2: 全ロボット緊急停止、3: 競技開始、9: プログラム終了")
-        a = input("機体への送信信号・プログラム終了: ")
-        if a == "1":
-            connect()
-        elif a == "2":
-            compEmgStop()
-        elif a == "3":
-            compStart()
-        elif a == "9":
-            exitTCApp()
-        else:
-            print("無効な入力です")
-        # time.sleep(0.5)
-
 # 以下メインルーチン
 init()
-
-# 管制プログラムの起動（受信した信号に対して送信するパッシブなものなので常に動かす）
-threadTC = threading.Thread(target=TCDaemon, daemon=True)
-threadTC.start()
 
 # Bottleの設定
 #@route('/static/<filename>')
@@ -406,6 +407,16 @@ def ajax_update():
     dict = {'dt': dt, 'serial': use_port, 'robot_num': ROBOT_NUM, 'robot': {'pos': pos, 'destPos': destPos, 'act': act, 'request': request, 'requestDestPos': requestDestPos, 'permit': permit, 'ballStatus': ballStatus, 'connectStatus': connectStatus, 'actText': actText, 'requestText': requestText, 'permitText': permitText, 'tweAddr': tweAddr}}
     return json.dumps(dict)
 
+@route('/initTC')
+def ajax_initTC():
+    init()
+    return "initTC"
+
+@route('/connect-serial')
+def ajax_connectSerial():
+    connectSerial()
+    return "serial connected"
+
 @route('/connect')
 def ajax_connect():
     connect()
@@ -420,6 +431,11 @@ def ajax_emgStop():
 def ajax_start():
     compStart()
     return "start"
+
+@route('/exit')
+def ajax_exit():
+    exitTCApp()
+    return "exit"
 
 # 最後に実行
 if __name__ == '__main__':
