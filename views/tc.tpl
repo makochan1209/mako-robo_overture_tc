@@ -110,16 +110,16 @@
 
                 for (let i = 0; i < dict["robot_num"]; i++) {
                     let robot = dict["robot"];
-                    $(".robot-container").eq(i).find(".robot-twe-id").find("span").html(robot["tweAddr"][i]);
-                    $(".robot-container").eq(i).find(".robot-pos").find("span").html(robot["pos"][i]);
-                    $(".robot-container").eq(i).find(".robot-dest-pos").find("span").html(robot["destPos"][i]);
-                    $(".robot-container").eq(i).find(".robot-act").find("span").html(robot["act"][i]);
+                    $(".robot-container").eq(i).find(".robot-twe-id").find("span").html("0x" + robot["tweAddr"][i].toString(16));
+                    $(".robot-container").eq(i).find(".robot-pos").find("span").html("0x" + robot["pos"][i].toString(16));
+                    $(".robot-container").eq(i).find(".robot-dest-pos").find("span").html("0x" + robot["destPos"][i].toString(16));
+                    $(".robot-container").eq(i).find(".robot-act").find("span").html("0x" + robot["act"][i].toString(16));
                     $(".robot-container").eq(i).find(".robot-ball").find("span.r").html(robot["ballStatus"][i]["r"]);
                     $(".robot-container").eq(i).find(".robot-ball").find("span.y").html(robot["ballStatus"][i]["y"]);
                     $(".robot-container").eq(i).find(".robot-ball").find("span.b").html(robot["ballStatus"][i]["b"]);
-                    $(".robot-container").eq(i).find(".robot-request").find("span").html(robot["request"][i]);
-                    $(".robot-container").eq(i).find(".robot-act").find("span").html(robot["requestDestPos"][i]);
-                    $(".robot-container").eq(i).find(".robot-permit").find("span").html(robot["permit"][i]);
+                    $(".robot-container").eq(i).find(".robot-request").find("span").html("0x" + robot["request"][i].toString(16));
+                    $(".robot-container").eq(i).find(".robot-act").find("span").html("0x" + robot["requestDestPos"][i].toString(16));
+                    $(".robot-container").eq(i).find(".robot-permit").find("span").html("0x" + robot["permit"][i].toString(16));
                 }
             }).fail(function() {
                 console.log("失敗");
