@@ -59,7 +59,7 @@
                 console.log("失敗");
             });
         }
-
+        
         function updateDOM() {
             $.ajax("/update", {
                 type: "get"
@@ -70,6 +70,18 @@
                 let serial = dict["serial"];
                 $("#time").html(dt);              // html要素を書き換える
                 $("#serial").html(serial);              // html要素を書き換える
+
+                for (let i = 0; i < dict["robot_num"]; i++) {
+                    let robot = dict["robot"];
+                    $(".robot-container").eq(i).find(".robot-twe-id").html("TWE-LITE アドレス：" + robot["tweAddr"][i]);
+                    $(".robot-container").eq(i).find(".robot-pos").html("現在地：" + robot["pos"][i]);
+                    $(".robot-container").eq(i).find(".robot-dest-pos").html("目的地：" + robot["destPos"][i]);
+                    $(".robot-container").eq(i).find(".robot-act").html("現在の行動：" + robot["act"][i]);
+                    $(".robot-container").eq(i).find(".robot-ball").html("ボール状況：赤" + robot["ballStatus"][i]["r"] + "個、黄" + robot["ballStatus"][i]["y"] + "個、青" + robot["ballStatus"][i]["b"] + "個");
+                    $(".robot-container").eq(i).find(".robot-request").html("現在の許可要求：" + robot["request"][i]);
+                    $(".robot-container").eq(i).find(".robot-act").html("現在の許可要求の目的地：" + robot["requestDestPos"][i]);
+                    $(".robot-container").eq(i).find(".robot-permit").html("直近の許可内容：" + robot["permit"][i]);
+                }
             }).fail(function() {
                 console.log("失敗");
             });

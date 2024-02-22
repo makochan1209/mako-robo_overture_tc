@@ -399,7 +399,7 @@ def index():
 @route('/update')
 def ajax_update():
     dt = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    dict = {'dt': dt, 'serial': use_port}
+    dict = {'dt': dt, 'serial': use_port, 'robot_num': ROBOT_NUM, 'robot': {'pos': pos, 'destPos': destPos, 'act': act, 'request': request, 'requestDestPos': requestDestPos, 'permit': permit, 'ballStatus': ballStatus, 'connectStatus': connectStatus, 'actText': actText, 'requestText': requestText, 'permitText': permitText, 'tweAddr': tweAddr}}
     return json.dumps(dict)
 
 @route('/connect')
