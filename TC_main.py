@@ -485,4 +485,4 @@ def ajax_exit():
 
 # 最後に実行
 if __name__ == '__main__':
-    run(host = '0.0.0.0', port = 80)
+    run(host = '0.0.0.0', port = 5678)
