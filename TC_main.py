@@ -417,6 +417,7 @@ def exitTCApp():
 
 # 以下メインルーチン
 init()
+connectSerial()
 
 # Bottleの設定
 @route('/static/<filename>')

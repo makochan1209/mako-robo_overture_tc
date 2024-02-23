@@ -287,6 +287,24 @@
                 document.getElementById("time").innerText = dt
                 document.getElementById("serial").innerText = (serial != null ? serial : "未接続")
 
+                const btnConnectSerialElement = document.getElementById("btn-connect-serial");
+                const btnConnectElement = document.getElementById("btn-connect");
+                const btnEmgStopElement = document.getElementById("btn-emg-stop");
+                const btnStartElement = document.getElementById("btn-start");
+                const btnInitElement = document.getElementById("btn-init");
+                if (serial != null) {
+                    btnConnectSerialElement.style.display = 'none';
+                    btnConnectElement.style.display = 'block';
+                    btnEmgStopElement.style.display = 'block';
+                    btnStartElement.style.display = 'block';
+                }
+                else {
+                    btnConnectSerialElement.style.display = 'block';
+                    btnConnectElement.style.display = 'none';
+                    btnEmgStopElement.style.display = 'none';
+                    btnStartElement.style.display = 'none';
+                }
+
                 const mapPosElementsList = [document.getElementById("map-pos00"), document.getElementById("map-pos01"), document.getElementById("map-pos02"), document.getElementById("map-pos03"), document.getElementById("map-pos04"), document.getElementById("map-pos05"), document.getElementById("map-pos06"), document.getElementById("map-pos07"), document.getElementById("map-pos08"), document.getElementById("map-pos09")];
                 for (let i = 0; i < mapPosElementsList.len; i++) {
                     mapPosElementsList[i].innerHTML = "";
