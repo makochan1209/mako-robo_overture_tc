@@ -76,12 +76,17 @@ def init():
 def connectSerial():
     global ser, use_port, twe, threadTC
     use_port = twelite.twe_serial_ports_detect()
-    ser = serial.Serial(use_port)
-    twe = twelite.TWELITE(ser)
+    if use_port is not None:
+        ser = serial.Serial(use_port)
+        twe = twelite.TWELITE(ser)
+        
+        # 管制プログラムの起動（受信した信号に対して送信するパッシブなものなので常に動かす）
+        threadTC = threading.Thread(target=TCDaemon, daemon=True)
+        threadTC.start()
+        return True
     
-    # 管制プログラムの起動（受信した信号に対して送信するパッシブなものなので常に動かす）
-    threadTC = threading.Thread(target=TCDaemon, daemon=True)
-    threadTC.start()
+    else:
+        return False
 
 # [0xA5, 0x5A, 0x80, "Length", "Data", "CD", 0x04]の形式で受信
 # "Data": 0x0*（送信元）, Command, Data
@@ -452,8 +457,11 @@ def ajax_initTC():
 
 @route('/connect-serial')
 def ajax_connectSerial():
-    connectSerial()
-    return "serial connected"
+    res = connectSerial()
+    if res:
+        return "serial connected"
+    else:
+        return "serial not connected"
 
 @route('/connect')
 def ajax_connect():

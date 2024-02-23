@@ -139,7 +139,7 @@ def twe_serial_ports_detect():
     """
     TWELITEに接続されているシリアルポートを自動で検出する関数。返り値はポート名。
     """
-    result = ""
+    result = None
     if sys.platform.startswith('win') or sys.platform.startswith('linux'):
         suggestPorts = []
         ports = list(serial.tools.list_ports.comports())
@@ -167,7 +167,7 @@ def twe_serial_ports_detect():
                 result = input()
                 if result.isdigit():
                     result = suggestPorts[int(result) - 1]
-        print("Port " + result + " is used")
+            print("Port " + result + " is connected to TWE-Lite.")
             
     else:
         print('Unsupported platform')

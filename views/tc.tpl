@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
@@ -36,25 +35,25 @@
         <!--<button onclick = "exitTC()">9: プログラム終了</button>-->
         <button onclick = "initTC()">0: プログラムのリセット（動作不調時のみ、シリアルポートはリセットされない）</button>
     </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script type="text/javascript">
         function initTC() {
-            $.ajax("/initTC", {
-                type: "get"
-            }).done(function(received_data) {
-                console.log(received_data);
-            }).fail(function() {
-                console.log("失敗");
-            });
+            let xhr = new XMLHttpRequest();
+            xhr.open('GET', '/initTC');
+            xhr.send();
+            xhr.onload = function () {
+                console.log(xhr.response);
+            };
         }
 
         function connectSerial() {
-            $.ajax("/connect-serial", {
-                type: "get"
-            }).done(function(received_data) {
-                console.log(received_data);
-            }).fail(function() {
-                console.log("失敗");
-            });
+            let xhr = new XMLHttpRequest();
+            xhr.open('GET', '/connect-serial');
+            xhr.send();
+            xhr.onload = function () {
+                console.log(xhr.response);
+            };
         }
 
         function connect() {
@@ -106,7 +105,7 @@
                 let dt = dict["dt"];
                 let serial = dict["serial"];
                 $("#time").html(dt);              // html要素を書き換える
-                $("#serial").html(serial);              // html要素を書き換える
+                $("#serial").html(serial != null ? serial : "未接続");              // html要素を書き換える
 
                 for (let i = 0; i < dict["robot_num"]; i++) {
                     let robot = dict["robot"];
@@ -126,7 +125,7 @@
             });
         };
         updateDOM();
-        setInterval(updateDOM, 100);
+        setInterval(updateDOM, 500);
     </script>
 </body>
 </html>
