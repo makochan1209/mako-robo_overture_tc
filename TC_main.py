@@ -419,9 +419,9 @@ def exitTCApp():
 init()
 
 # Bottleの設定
-#@route('/static/<filename>')
-#def server_static(filename):
-#    return static_file(filename, root='./static/')
+@route('/static/<filename>')
+def server_static(filename):
+    return static_file(filename, root='./static/')
 
 @route('/')
 def index():
