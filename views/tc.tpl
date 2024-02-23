@@ -7,33 +7,49 @@
     <title>Overture by Team mako-robo 管理コンソール</title>
 </head>
 <body>
-    <h2>Overture by Team mako-robo 管理コンソール</h2>
-    <div>
-        現在時刻：<span id = "time"></span>
-    </div>
-    <div>シリアルポート：<span id = "serial"></span></div>
-    <div>
-        % for i in range(ROBOT_NUM):
-            <div class = "robot-container">
-                <div class = "robot-no">{{i + 1}}号機</div>
-                <div class = "robot-twe-id">TWE-LITE アドレス：<span></span></div>
-                <div class = "robot-pos">現在地：<span></span></div>
-                <div class = "robot-dest-pos">目的地：<span></span></div>
-                <div class = "robot-act">現在の行動：<span></span></div>
-                <div class = "robot-ball">ボール状況：赤<span class = "r"></span>個、黄<span class = "y"></span>個、青<span class = "b"></span>個</div>
-                <div class = "robot-request">現在の許可要求：<span></span></div>
-                <div class = "robot-act">現在の許可要求の目的地：<span></span></div>
-                <div class = "robot-permit">直近の許可内容：<span></span></div>
-            </div>
-        % end
-    </div>
-    <div>
-        <button onclick = "connectSerial()">1: シリアルポートと接続</button>
-        <button onclick = "connect()">2: ロボットと接続</button>
-        <button onclick = "emgStop()">3: 全ロボット緊急停止</button>
-        <button onclick = "start()">4: 競技開始</button>
-        <!--<button onclick = "exitTC()">9: プログラム終了</button>-->
-        <button onclick = "initTC()">0: プログラムのリセット（動作不調時のみ、シリアルポートはリセットされない）</button>
+    <style>
+        #wrapper {
+            padding: 0 100px;
+        }
+
+        #robot-list-container {
+            display: flex;
+        }
+
+        .robot-container {
+            width: 300px;
+
+        }
+    </style>
+    <div id = "wrapper">
+        <h2>Overture by Team mako-robo 管理コンソール</h2>
+        <div>
+            現在時刻：<span id = "time"></span>
+        </div>
+        <div>シリアルポート：<span id = "serial"></span></div>
+        <div id = "robot-list-container">
+            % for i in range(ROBOT_NUM):
+                <div class = "robot-container">
+                    <div class = "robot-no">{{i + 1}}号機</div>
+                    <div class = "robot-twe-id">TWE-LITE アドレス：<span></span></div>
+                    <div class = "robot-pos">現在地：<span></span></div>
+                    <div class = "robot-dest-pos">目的地：<span></span></div>
+                    <div class = "robot-act">現在の行動：<span></span></div>
+                    <div class = "robot-ball">ボール状況：赤<span class = "r"></span>個、黄<span class = "y"></span>個、青<span class = "b"></span>個</div>
+                    <div class = "robot-request">現在の許可要求：<span></span></div>
+                    <div class = "robot-act">現在の許可要求の目的地：<span></span></div>
+                    <div class = "robot-permit">直近の許可内容：<span></span></div>
+                </div>
+            % end
+        </div>
+        <div>
+            <button onclick = "connectSerial()">1: シリアルポートと接続</button>
+            <button onclick = "connect()">2: ロボットと接続</button>
+            <button onclick = "emgStop()">3: 全ロボット緊急停止</button>
+            <button onclick = "start()">4: 競技開始</button>
+            <!--<button onclick = "exitTC()">9: プログラム終了</button>-->
+            <button onclick = "initTC()">0: プログラムのリセット（動作不調時のみ、シリアルポートはリセットされない）</button>
+        </div>
     </div>
 
     <script type="text/javascript">
