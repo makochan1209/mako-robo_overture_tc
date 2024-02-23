@@ -72,6 +72,11 @@ sudo systemctl start overture.service
 sudo systemctl stop test.service
 ```
 
+GitでPullなどしたあとは再起動を
+```:terminal
+sudo systemctl restart overture.service
+```
+
 ### サービスの自動起動の有効、無効
 ```:terminal
 sudo systemctl enable test.service
