@@ -37,3 +37,11 @@ deactivate
 pip freeze > requirements.txt
 ```
 ```venv_config```ディレクトリを共有用に用意済。
+
+## Raspberry Pi 4
+https://qiita.com/osw_nuco/items/a5d7173c1e443030875f
+https://irohaplat.com/raspberry-pi-local-web-server/
+
+```:overture.sh
+~/overture/venv_overture_tc/bin/python ~/overture/TC_main.py
+```
