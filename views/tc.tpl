@@ -193,28 +193,31 @@
                 numString = "①";
                 break;
                 case 2:
-                numString = "①";
+                numString = "②";
                 break;
                 case 3:
-                numString = "①";
+                numString = "③";
                 break;
                 case 4:
-                numString = "①";
+                numString = "④";
                 break;
                 case 5:
-                numString = "①";
+                numString = "⑤";
                 break;
                 case 6:
-                numString = "①";
+                numString = "⑥";
                 break;
                 case 7:
-                numString = "①";
+                numString = "⑦";
                 break;
                 case 8:
-                numString = "①";
+                numString = "⑧";
                 break;
                 case 9:
-                numString = "①";
+                numString = "⑨";
+                break;
+                default:
+                numString = i + " "
                 break;
             }
             return numString;
