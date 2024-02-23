@@ -45,3 +45,35 @@ https://irohaplat.com/raspberry-pi-local-web-server/
 ```:overture.sh
 ~/overture/venv_overture_tc/bin/python ~/overture/TC_main.py
 ```
+
+### systemd
+https://www.raspberrypirulo.net/entry/systemd
+https://qiita.com/marumen/items/e4c75a2617cb5d0113ce
+https://qiita.com/tabimoba/items/e0230eb9d1f943b8708f
+
+```:/lib/systemd/system/overture.service
+[Unit]
+Description = Overture by Team mako-robo TC_main.py Auto Run
+ConditionPathExists=/home/makochan12.9/overture
+
+[Service]
+WorkingDirectory=/home/makochan12.9/overture
+ExecStart=/home/makochan12.9/overture/venv_overture_tc/bin/python /home/makochan12.9/overture/TC_main.py
+Restart=always
+Type=simple
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### サービスの起動、終了
+```:terminal
+sudo systemctl start overture.service
+sudo systemctl stop test.service
+```
+
+### サービスの自動起動の有効、無効
+```:terminal
+sudo systemctl enable test.service
+sudo systemctl disable test.service
+```
