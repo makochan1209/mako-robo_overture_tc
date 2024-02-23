@@ -29,6 +29,7 @@
 
         .robot-container {
             width: 300px;
+            margin-bottom: 0.5rem;
         }
 
         #robot-stage-container {
@@ -290,7 +291,7 @@
                 for (let i = 0; i < mapPosElementsList.len; i++) {
                     mapPosElementsList[i].innerHTML = "";
                 }
-                
+
                 for (let i = 0; i < dict["robot_num"]; i++) {
                     const robotContainer = document.getElementsByClassName("robot-container")[i];
 
