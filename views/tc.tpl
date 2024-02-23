@@ -36,7 +36,6 @@
         <button onclick = "initTC()">0: プログラムのリセット（動作不調時のみ、シリアルポートはリセットされない）</button>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script type="text/javascript">
         function initTC() {
             let xhr = new XMLHttpRequest();
@@ -57,75 +56,73 @@
         }
 
         function connect() {
-            $.ajax("/connect", {
-                type: "get"
-            }).done(function(received_data) {
-                console.log(received_data);
-            }).fail(function() {
-                console.log("失敗");
-            });
+            let xhr = new XMLHttpRequest();
+            xhr.open('GET', '/connect');
+            xhr.send();
+            xhr.onload = function () {
+                console.log(xhr.response);
+            };
         }
 
         function emgStop() {
-            $.ajax("/emgStop", {
-                type: "get"
-            }).done(function(received_data) {
-                console.log(received_data);
-            }).fail(function() {
-                console.log("失敗");
-            });
+            let xhr = new XMLHttpRequest();
+            xhr.open('GET', '/emgStop');
+            xhr.send();
+            xhr.onload = function () {
+                console.log(xhr.response);
+            };
         }
 
         function start() {
-            $.ajax("/start", {
-                type: "get"
-            }).done(function(received_data) {
-                console.log(received_data);
-            }).fail(function() {
-                console.log("失敗");
-            });
+            let xhr = new XMLHttpRequest();
+            xhr.open('GET', '/start');
+            xhr.send();
+            xhr.onload = function () {
+                console.log(xhr.response);
+            };
         }
 
         function exitTC() {
-            $.ajax("/exit", {
-                type: "get"
-            }).done(function(received_data) {
-                console.log(received_data);
-            }).fail(function() {
-                console.log("失敗");
-            });
+            let xhr = new XMLHttpRequest();
+            xhr.open('GET', '/exit');
+            xhr.send();
+            xhr.onload = function () {
+                console.log(xhr.response);
+            };
         }
 
         function updateDOM() {
-            $.ajax("/update", {
-                type: "get"
-            }).done(function(received_data) {           // 戻ってきたのはJSON（文字列）
-                let dict = JSON.parse(received_data);   // JSONを連想配列にする
+            let xhr = new XMLHttpRequest();
+            xhr.open('GET', '/update');
+            xhr.send();
+            xhr.onload = function () {
+                const dict = JSON.parse(xhr.responseText);
                 // 以下、Javascriptで料理する
-                let dt = dict["dt"];
-                let serial = dict["serial"];
-                $("#time").html(dt);              // html要素を書き換える
-                $("#serial").html(serial != null ? serial : "未接続");              // html要素を書き換える
+                const dt = dict["dt"];
+                const serial = dict["serial"];
+                const robot = dict["robot"];
+                document.getElementById("time").innerText = dt
+                document.getElementById("serial").innerText = (serial != null ? serial : "未接続")
 
                 for (let i = 0; i < dict["robot_num"]; i++) {
-                    let robot = dict["robot"];
-                    $(".robot-container").eq(i).find(".robot-twe-id").find("span").html(robot["tweAddr"][i] != 0xff ? ("0x" + robot["tweAddr"][i].toString(16)) : "未接続");
-                    $(".robot-container").eq(i).find(".robot-pos").find("span").html("0x" + robot["pos"][i].toString(16));
-                    $(".robot-container").eq(i).find(".robot-dest-pos").find("span").html("0x" + robot["destPos"][i].toString(16));
-                    $(".robot-container").eq(i).find(".robot-act").find("span").html((robot["act"][i] != 0xff ? robot["actText"][robot["act"][i]] : "なし") + "（0x" + robot["act"][i].toString(16) + "）");
-                    //$(".robot-container").eq(i).find(".robot-ball").find("span.r").html(robot["ballStatus"][i]["r"]);
-                    //$(".robot-container").eq(i).find(".robot-ball").find("span.y").html(robot["ballStatus"][i]["y"]);
-                    //$(".robot-container").eq(i).find(".robot-ball").find("span.b").html(robot["ballStatus"][i]["b"]);
-                    $(".robot-container").eq(i).find(".robot-request").find("span").html((robot["request"][i] != 0xff ? robot["requestText"][robot["request"][i]] : "なし") + "（0x" + robot["request"][i].toString(16) + "）");
-                    //$(".robot-container").eq(i).find(".robot-request-dest").find("span").html("0x" + robot["requestDestPos"][i].toString(16) + "）");
-                    $(".robot-container").eq(i).find(".robot-permit").find("span").html((robot["permit"][i] != 0xff ? robot["permitText"][robot["permit"][i]] : "なし") + "（0x" + robot["permit"][i].toString(16) + "）");
+                    const robotContainer = document.getElementsByClassName("robot-container")[i];
+
+                    robotContainer.getElementsByClassName("robot-twe-id")[0].getElementsByTagName("span")[0].innerText = (robot["tweAddr"][i] != 0xff ? ("0x" + robot["tweAddr"][i].toString(16)) : "未接続");
+                    robotContainer.getElementsByClassName("robot-pos")[0].getElementsByTagName("span")[0].innerText = ("0x" + robot["pos"][i].toString(16));
+                    robotContainer.getElementsByClassName("robot-dest-pos")[0].getElementsByTagName("span")[0].innerText = ("0x" + robot["destPos"][i].toString(16));
+                    robotContainer.getElementsByClassName("robot-act")[0].getElementsByTagName("span")[0].innerText = ((robot["act"][i] != 0xff ? robot["actText"][robot["act"][i]] : "なし") + "（0x" + robot["act"][i].toString(16) + "）");
+                    robotContainer.getElementsByClassName("robot-ball")[0].getElementsByClassName("r")[0].innerText = robot["ballStatus"][i]["r"];
+                    robotContainer.getElementsByClassName("robot-ball")[0].getElementsByClassName("y")[0].innerText = robot["ballStatus"][i]["y"];
+                    robotContainer.getElementsByClassName("robot-ball")[0].getElementsByClassName("b")[0].innerText = robot["ballStatus"][i]["b"];
+                    robotContainer.getElementsByClassName("robot-request")[0].getElementsByTagName("span")[0].innerText = ((robot["request"][i] != 0xff ? robot["requestText"][robot["request"][i]] : "なし") + "（0x" + robot["request"][i].toString(16) + "）");
+                    // robotContainer.getElementsByClassName("robot-request-dest")[0].getElementsByTagName("span")[0].innerText = ("0x" + robot["requestDestPos"][i].toString(16) + "）");
+                    robotContainer.getElementsByClassName("robot-permit")[0].getElementsByTagName("span")[0].innerText = ((robot["permit"][i] != 0xff ? robot["permitText"][robot["permit"][i]] : "なし") + "（0x" + robot["permit"][i].toString(16) + "）");
                 }
-            }).fail(function() {
-                console.log("失敗");
-            });
-        };
+            };
+        }
+
         updateDOM();
-        setInterval(updateDOM, 500);
+        setInterval(updateDOM, 250);
     </script>
 </body>
 </html>
