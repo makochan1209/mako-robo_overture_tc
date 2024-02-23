@@ -70,6 +70,7 @@ WantedBy=multi-user.target
 ```:terminal
 sudo systemctl start overture.service
 sudo systemctl stop test.service
+sudo systemctl status test.service
 ```
 
 GitでPullなどしたあとは再起動を
