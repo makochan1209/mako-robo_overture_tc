@@ -32,6 +32,10 @@
             margin-bottom: 0.5rem;
         }
 
+        #terminal-container {
+            width: 100%;
+        }
+
         #robot-stage-container {
             display: flex;
             flex-direction: column;
@@ -163,6 +167,9 @@
                         <div class = "robot-permit">直近の許可内容：<span></span></div>
                     </div>
                 % end
+                    <div id = "terminal-container">
+                        <textarea id = "terminal" cols="80" rows="8"></textarea>
+                    </div>
             </div>
             <div id = "robot-stage-container">
                 <div id = "robot-stage">
@@ -338,6 +345,11 @@
                         mapPosElementsList[i].appendChild(spanElement);
                     }
                 }
+                terminalElement = document.getElementById("terminal")
+                for (i = 0; i < robot["terminal"].length; i++) {
+                    terminalElement.value += (robot["terminal"][i] + "\n")
+                }
+                terminalElement.scrollTop = terminalElement.scrollHeight;
             };
         }
 

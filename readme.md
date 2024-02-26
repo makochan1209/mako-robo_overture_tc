@@ -45,3 +45,7 @@ https://irohaplat.com/raspberry-pi-local-web-server/
 ```:overture.sh
 ~/overture/venv_overture_tc/bin/python ~/overture/TC_main.py
 ```
+
+# その他
+https://qiita.com/yuya-yuya/items/e5587898121b0aeee673
+https://zenn.dev/teba_eleven/articles/77ed17098e28d7
