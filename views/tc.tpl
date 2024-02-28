@@ -8,6 +8,20 @@
 </head>
 <body>
     <style>
+        :root {
+            --bg-color: #fff;
+            --font-color: #303030;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            font-family: "Yu Gothic", "游ゴシック", "YuGothic", "游ゴシック体", "ヒラギノ角ゴ Pro W3", 'Noto Sans JP', "メイリオ", sans-serif;
+            color: var(--font-color);
+            margin: 0;
+            padding: 0;
+            font-weight: 500;
+        }
+
         #all-wrapper {
             padding: 0 100px;
         }
@@ -157,7 +171,7 @@
                 % for i in range(ROBOT_NUM):
                     <div class = "robot-container">
                         <div class = "robot-no">{{i + 1}}号機</div>
-                        <div class = "robot-twe-id">TWE-LITE アドレス：<span></span></div>
+                        <div class = "robot-twe-id">TWE-Lite アドレス：<span></span></div>
                         <div class = "robot-pos">現在地：<span></span></div>
                         <div class = "robot-dest-pos">目的地：<span></span></div>
                         <div class = "robot-act">現在の行動：<span></span></div>
