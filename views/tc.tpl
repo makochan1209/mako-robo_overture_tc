@@ -367,6 +367,12 @@
                         spanElement.innerText = numString;
                         mapPosElementsList[i].appendChild(spanElement);
                     }
+                    if (robot["finalDestPos"][i] <= 0x09) {
+                        const spanElement = document.createElement("span");
+                        spanElement.classList.add("icon-final-dest-pos");
+                        spanElement.innerText = numString;
+                        mapPosElementsList[i].appendChild(spanElement);
+                    }
                 }
                 terminalElement = document.getElementById("terminal")
                 for (i = 0; i < robot["terminal"].length; i++) {
