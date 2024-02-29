@@ -21,6 +21,7 @@ tweAddr = []  # 各機のTWELITEのアドレス（TWELITE交換に対応）、0x
 
 pos = [] # ロボットの位置
 destPos = [] # ロボットの行き先
+finalDestPos = [] # ロボットの最終目的地
 act = [] # ロボットの現在の行動内容
 request = [] # ロボットの許可要求内容（許可されていないもののみ）
 requestDestPos = [] # ロボットの許可要求内容における目的地（許可されていないもののみ）
@@ -67,6 +68,7 @@ def init():
         tweAddr.append(0xff)
         pos.append(0xff)
         destPos.append(0xff)
+        finalDestPos.append(0xff)
         act.append(0xff)
         request.append(0xff)
         requestDestPos.append(0xff)
@@ -246,14 +248,17 @@ def permitJudge():
             
             permitDestPos = 0xff    # 許可する目的地のバッファ（destPosにすぐ代入されるため表示等不要）
             reachableDestPosBuff = 0xff # 近くまで行くことができる場合の目的地バッファ、直接目的地に行ける場合はそちらが優先される。
+            finalDestPosBuff = 0xff # 最終目的地のバッファ、近くまで行くことができるままで最終目的地にたどり着けない場合に使用
             for j in range(len(requestDestPosList)):
                 destPosBuff = reachablePos(fromID, pos[i], requestDestPosList[j])
                 if destPosBuff == requestDestPosList[j]:
                     permitDestPos = destPosBuff
+                    finalDestPosBuff = destPosBuff
                     permitted = True
                     break
                 elif destPosBuff != 0xff and reachableDestPosBuff == 0xff:  # 近くまで行ける場所が見つかって、まだ「近くまで行くことができる場所」が見つかっていない場合
                     reachableDestPosBuff = destPosBuff
+                    finalDestPosBuff = requestDestPosList[j]
                     permitted = True
             
             if permitDestPos == 0xff and reachableDestPosBuff != 0xff:
@@ -262,9 +267,10 @@ def permitJudge():
             if permitted:
                 permit[fromID] = 0x01
                 destPos[fromID] = permitDestPos
+                finalDestPos[fromID] = finalDestPosBuff
                 requestDestPos[fromID] = 0xff
-                terminalPrint("移動許可、目的地: " + hex(destPos[fromID]))
-                twe.sendTWE(tweAddr[fromID], 0x50, [permit[fromID], destPos[fromID]]) # 許可を返信
+                terminalPrint("移動許可、許可目的地: " + hex(destPos[fromID]) + "、最終目的地：" + hex(finalDestPos[fromID]))
+                twe.sendTWE(tweAddr[fromID], 0x50, [permit[fromID], destPos[fromID], finalDestPos[fromID]]) # 許可を返信
         elif request[fromID] == 0x02:   # ボール探索許可要求、探索個数
             global searchNum
             ballNum = 0
@@ -448,6 +454,7 @@ def ajax_update():
         'robot': {
             'pos': pos,
             'destPos': destPos,
+            'finalDestPos': finalDestPos,
             'act': act,
             'request': request,
             'requestDestPos': requestDestPos,

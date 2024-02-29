@@ -9,7 +9,7 @@
 <body>
     <style>
         :root {
-            --bg-color: #fff;
+            --bg-color: #fbfbfb;
             --font-color: #303030;
         }
 
@@ -146,6 +146,10 @@
             color: red;
         }
 
+        span.icon-final-dest-pos {
+            color: purple;
+        }
+
         button {
             font-size: 1rem;
             padding: 1rem 0.5rem;
@@ -170,18 +174,19 @@
             <div id = "robot-list-container">
                 % for i in range(ROBOT_NUM):
                     <div class = "robot-container">
-                        <div class = "robot-no">{{i + 1}}号機</div>
+                        <h3 class = "robot-no">{{i + 1}}号機</h3>
                         <div class = "robot-twe-id">TWE-Lite アドレス：<span></span></div>
-                        <div class = "robot-pos">現在地：<span></span></div>
-                        <div class = "robot-dest-pos">目的地：<span></span></div>
+                        <div class = "robot-pos" style = "display: none;">現在地：<span></span></div>
+                        <div class = "robot-dest-pos" style = "display: none;">目的地：<span></span></div>
                         <div class = "robot-act">現在の行動：<span></span></div>
                         <div class = "robot-ball">ボール状況：赤<span class = "r"></span>個、黄<span class = "y"></span>個、青<span class = "b"></span>個</div>
                         <div class = "robot-request">現在の許可要求：<span></span></div>
-                        <div class = "robot-act">現在の許可要求の目的地：<span></span></div>
+                        <div class = "robot-act" style = "display: none;">現在の許可要求の目的地：<span></span></div>
                         <div class = "robot-permit">直近の許可内容：<span></span></div>
                     </div>
                 % end
                     <div id = "terminal-container">
+                        <h2>標準出力</h2>
                         <textarea id = "terminal" cols="80" rows="8"></textarea>
                     </div>
             </div>
@@ -201,7 +206,8 @@
                 </div>
                 <ul id = "legend">
                     <li><span class = "icon-pos">①②</span>：現在地</li>
-                    <li><span class = "icon-dest-pos">①②</span>：目的地</li>
+                    <li><span class = "icon-dest-pos">①②</span>：許可目的地</li>
+                    <li><span class = "icon-final-dest-pos">①②</span>：最終目的地</li>
                 </ul>
             </div>
         </div>
@@ -330,7 +336,7 @@
                 }
 
                 const mapPosElementsList = [document.getElementById("map-pos00"), document.getElementById("map-pos01"), document.getElementById("map-pos02"), document.getElementById("map-pos03"), document.getElementById("map-pos04"), document.getElementById("map-pos05"), document.getElementById("map-pos06"), document.getElementById("map-pos07"), document.getElementById("map-pos08"), document.getElementById("map-pos09")];
-                for (let i = 0; i < mapPosElementsList.len; i++) {
+                for (let i = 0; i < mapPosElementsList.length; i++) {
                     mapPosElementsList[i].innerHTML = "";
                 }
 
