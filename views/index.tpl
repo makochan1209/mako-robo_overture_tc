@@ -11,7 +11,7 @@
     <div id = "all-wrapper">
         <header>
             <div class = "wrapper">
-                <div class = "mrma-icon">mako-robo<div>Manager</div></div>
+                <div class = "mrma-icon"><div>mako-robo</div><div>Manager</div></div>
                 <div id = "time"></div>
             </div>
         </header>

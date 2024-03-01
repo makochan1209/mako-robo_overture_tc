@@ -1,32 +1,40 @@
 @font-face {
     font-family: 'Roboto Thin';
-    src: local('Roboto Thin'), url('https://roboto-webfont.googlecode.com/files/Roboto-Thin-webfont.woff') format('woff');
+    src: local('Roboto Thin'), url('/static/Roboto-Thin-webfont.woff') format('woff');
     font-weight: 400;
     font-style: normal;
 }
 
 @font-face {
     font-family: 'Roboto Black';
-    src: local('Roboto Black'), url('https://roboto-webfont.googlecode.com/files/Roboto-Black-webfont.woff') format('woff');
+    src: local('Roboto Black'), url('/static/Roboto-Black-webfont.woff') format('woff');
     font-weight: 400;
     font-style: normal;
 }
 
 @font-face {
     font-family: 'Roboto';
-    src: local('Roboto'), url('https://roboto-webfont.googlecode.com/files/Roboto-Bold-webfont.woff') format('woff');
+    src: local('Roboto'), url('/static/Roboto-Bold-webfont.woff') format('woff');
     font-weight: 700;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Roboto Light';
+    src: local('Roboto Light'), url('/static/Roboto-Light-webfont.woff') format('woff');
+    font-weight: 400;
     font-style: normal;
 }
 
 :root {
     --bg-color: #fbfbfb;
-    --font-color: #303030;
+    --font-color: #2A2A2A;
+    --dark-bg-color: #2A2A2A;
 }
 
 body {
     background-color: var(--bg-color);
-    font-family: "Yu Gothic", "游ゴシック", "YuGothic", "游ゴシック体", "ヒラギノ角ゴ Pro W3", 'Noto Sans JP', "メイリオ", sans-serif;
+    font-family: "Roboto Thin", "Yu Gothic", "游ゴシック", "YuGothic", "游ゴシック体", "ヒラギノ角ゴ Pro W3", 'Noto Sans JP', "メイリオ", sans-serif;
     color: var(--font-color);
     margin: 0;
     padding: 0;
@@ -35,6 +43,51 @@ body {
 
 .wrapper {
     padding: 0 100px;
+}
+
+.mrma-icon {
+    display: inline-block;
+    display: flex;
+    font-family: 'Roboto Black', sans-serif;
+    font-size: 30px;
+}
+
+.mrma-icon div {
+    padding: 0.25rem;
+}
+
+.mrma-icon div:first-child {
+    padding-left: 0;
+}
+
+.mrma-icon div:last-child {
+    color: var(--bg-color);
+    background-color: var(--dark-bg-color);
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+#all-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#all-wrapper > div, #all-wrapper > header {
+    width: 100%;
+}
+
+header {
+    height: 80px;
+    display: flex;
+    align-items: center;
+}
+
+header .wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 #button-wrapper {
