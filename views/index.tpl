@@ -26,13 +26,13 @@
                         <div id = "info-bar-status" class = "running">RUNNING</div>
                         <div class = "info-bar-telemetry-box">
                             <div class = "title">Port</div>
-                            <div class = "value"><span id = "serial" class = "value"></span></div>
+                            <div class = "value"><span id = "serial" class = "main-value"></span></div>
                         </div>
                         <div class = "info-bar-telemetry-box small-margin-right">
                             <div class = "title">Total Point</div>
-                            <div class = "value"><span id = "total-point-value" class = "value">44</span><span class = "smaller-value"> / 50</span></div>
+                            <div class = "value"><span id = "total-point-value" class = "main-value">44</span><span class = "smaller-value">/ 50</span></div>
                         </div>
-                        <div class = "info-bar-telemetry-box">
+                        <div class = "info-bar-telemetry-box total-point-detail-box">
                             <ul class = "total-point-detail-list">
                                 <li class = "ball-point-elem red-ball-point-elem" id = "total-red">5</li>
                                 <li class = "ball-point-elem yellow-ball-point-elem" id = "total-yellow">4</li>
@@ -47,18 +47,20 @@
                         <div id = "robot-list-container">
                             % for i in range(ROBOT_NUM):
                                 <div class = "robot-container">
-                                    <h4>Robot %i% <span class = "twe-lite-address"></span></h4>
+                                    <h4>Robot {{i + 1}} <span class = "twe-lite-address"></span></h4>
                                     <div class = "robot-info-box">
                                         <div class = "robot-info-status">
                                             <span class = "value">SEARCHING</span><span class = "smaller-value"></span>
                                         </div>
-                                        <ul class = "robot-ball-status">
+                                        <ul class = "robot-ball-status {{"d-none" if i == 1 else ""}}">
                                             <li class = "ball-point-elem red-ball-point-elem" id = "total-red">5</li>
                                             <li class = "ball-point-elem yellow-ball-point-elem" id = "total-yellow">4</li>
                                             <li class = "ball-point-elem blue-ball-point-elem" id = "total-blue">4</li>
-                                        </div>
+                                        </ul>
                                     </div>
                                 </div>
+                            % end
+                        </div>
                     </div>
                 </div>
             </div>

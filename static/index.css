@@ -1,14 +1,14 @@
 @font-face {
     font-family: 'Roboto Thin';
     src: local('Roboto Thin'), url('/static/Roboto-Thin-webfont.woff') format('woff');
-    font-weight: 400;
+    font-weight: 500;
     font-style: normal;
 }
 
 @font-face {
     font-family: 'Roboto Black';
     src: local('Roboto Black'), url('/static/Roboto-Black-webfont.woff') format('woff');
-    font-weight: 400;
+    font-weight: 500;
     font-style: normal;
 }
 
@@ -22,7 +22,7 @@
 @font-face {
     font-family: 'Roboto Light';
     src: local('Roboto Light'), url('/static/Roboto-Light-webfont.woff') format('woff');
-    font-weight: 400;
+    font-weight: 500;
     font-style: normal;
 }
 
@@ -30,15 +30,21 @@
     --bg-color: #fbfbfb;
     --font-color: #2A2A2A;
     --dark-bg-color: #2A2A2A;
+    --gray-bg-color: #858585;
+    --theme-bg-color: #2C7531;
+    --red: #D63B3B;
+    --yellow: #F5D32F;
+    --blue: #5374EB;
 }
 
 body {
     background-color: var(--bg-color);
-    font-family: "Roboto Thin", "Yu Gothic", "游ゴシック", "YuGothic", "游ゴシック体", "ヒラギノ角ゴ Pro W3", 'Noto Sans JP', "メイリオ", sans-serif;
+    font-family: "Roboto Light", "Yu Gothic", "游ゴシック", "YuGothic", "游ゴシック体", "ヒラギノ角ゴ Pro W3", 'Noto Sans JP', "メイリオ", sans-serif;
     color: var(--font-color);
     margin: 0;
     padding: 0;
     font-weight: 500;
+    font-size: 20px;
 }
 
 .wrapper {
@@ -67,6 +73,77 @@ body {
     padding-right: 0.5rem;
 }
 
+.ball-point-elem {
+    position: relative;
+    padding-left: 1.25rem;
+}
+
+.ball-point-elem::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    /*background-color: var(--theme-bg-color);*/
+}
+
+.ball-point-elem.red-ball-point-elem::before {
+    background-color: var(--red);
+}
+
+.ball-point-elem.yellow-ball-point-elem::before {
+    background-color: var(--yellow);
+}
+
+.ball-point-elem.blue-ball-point-elem::before {
+    background-color: var(--blue);
+}
+
+.ball-point-elem.tennis-ball-point-elem::before {
+    border: 1.5px solid var(--yellow);
+    box-sizing: border-box;
+}
+
+ul.total-point-detail-list, ul.robot-ball-status {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+}
+
+ul.robot-ball-status {
+    justify-content: center;
+    max-height: 1rem;
+    opacity: 1;
+    visibility: visible;
+    transition: all 0.5s;
+}
+
+ul.robot-ball-status.d-none {
+    opacity: 0;
+    visibility: collapse;
+    max-height: 0;
+}
+
+ul.total-point-detail-list > li:not(:last-child), ul.robot-ball-status > li:not(:last-child) {
+    margin-right: 1.5rem;
+}
+
+ul.total-point-detail-list > li {
+    font-size: 12px;
+    height: 16px;
+    line-height: 16px;
+}
+
+ul.robot-ball-status > li {
+    font-size: 15px;
+    height: 18px;
+    line-height: 18px;
+}
+
 #all-wrapper {
     display: flex;
     flex-direction: column;
@@ -90,6 +167,143 @@ header .wrapper {
     align-items: center;
 }
 
+#info-bar {
+    height: 150px;
+    background-color: var(--dark-bg-color);
+    color: var(--bg-color);
+    display: flex;
+}
+
+#info-bar > div {
+    display: flex;
+}
+
+#info-bar-img {
+    width: 150px;
+    height: 150px;
+    background-color: var(--theme-bg-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#info-bar-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+#info-bar-telemetry {
+    flex: 1;
+    padding-left: 20px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+#info-bar-telemetry > div {
+    display: flex;
+    align-items: center;
+    padding: 0.25rem 0;
+}
+
+#info-bar-telemetry > div > div, #info-bar-telemetry > div > h1 {
+    margin: 0;
+    margin-right: 50px;
+}
+
+#info-bar-telemetry h1 {
+    font-family: 'Roboto Black', sans-serif;
+    font-size: 30px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+}
+
+#info-bar-status {
+    width: 155px;
+    height: 30px;
+    position: relative;
+    background-color: rgba(127, 211, 241, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#info-bar-status::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    background-color: rgba(127, 211, 241, 0.3);
+    z-index: 10;
+}
+
+div.info-bar-telemetry-box {
+    display: flex;
+    flex-direction: column;
+}
+
+#info-bar-telemetry div.info-bar-telemetry-box.small-margin-right {
+    margin-right: 30px;
+}
+
+div.info-bar-telemetry-box div.title {
+    font-size: 12px;
+    height: 15px;
+}
+
+div.info-bar-telemetry-box div.value {
+    height: 30px;
+    display: flex;
+    align-items: baseline;
+}
+
+div.info-bar-telemetry-box div.value > span {
+    display: inline-block;
+    line-height: 30px;
+}
+
+div.info-bar-telemetry-box div.value > span.smaller-value {
+    font-size: 15px;
+    line-height: 20px;
+    margin-left: 0.5rem;
+}
+
+div.info-bar-telemetry-box.total-point-detail-box {
+    height: 40px;
+    justify-content: space-between;
+}
+
+#robot-list-container {
+    display: flex;
+}
+
+#robot-list-container h4 {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+#robot-list-container div.robot-info-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--gray-bg-color);
+    width: 180px;
+    height: 50px;
+    border-radius: 5px;
+    font-size: 18px;
+}
+
+#robot-list-container div.robot-info-box > * {
+    margin: 0.1rem 0;
+}
+
 #button-wrapper {
     margin: 0.5rem 0;
 }
@@ -106,7 +320,7 @@ header .wrapper {
 }
 
 .robot-container {
-    width: 300px;
+    margin-right: 20px;
     margin-bottom: 0.5rem;
 }
 
