@@ -31,6 +31,7 @@
     --font-color: #2A2A2A;
     --dark-bg-color: #2A2A2A;
     --gray-bg-color: #858585;
+    --h2-border: #CECECE;
     --theme-bg-color: #2C7531;
     --red: #D63B3B;
     --yellow: #F5D32F;
@@ -300,39 +301,29 @@ div.info-bar-telemetry-box.total-point-detail-box {
     font-size: 18px;
 }
 
-#robot-list-container div.robot-info-box > * {
-    margin: 0.1rem 0;
-}
-
-#button-wrapper {
-    margin: 0.5rem 0;
-}
-
-#content-wrapper {
-    margin: 1rem 0;
-    display: flex;
-    justify-content: space-between;
-}
-
-#robot-list-container {
-    display: flex;
-    flex-wrap: wrap;
-}
-
-.robot-container {
+#robot-list-container .robot-container {
     margin-right: 20px;
     margin-bottom: 0.5rem;
 }
 
-#terminal-container {
-    width: 100%;
+#robot-list-container div.robot-container div.robot-info-box > * {
+    margin: 0.1rem 0;
+}
+
+#main-page > div {
+    display: flex;
+}
+
+#main-page h2 {
+    margin: 0;
+    font-weight: 500;
+    font-size: 25px;
+    border-bottom: 1px solid var(--h2-border);
 }
 
 #robot-stage-container {
     display: flex;
     flex-direction: column;
-    align-items: end;
-    max-height: 50vh;
 }
 
 #robot-stage {
@@ -428,8 +419,16 @@ span.icon-final-dest-pos {
     color: purple;
 }
 
+#main-content-container {
+    flex: 1;
+}
+
 button {
     font-size: 1rem;
     padding: 1rem 0.5rem;
     margin-right: 0.5rem;
+}
+
+#terminal-container {
+    width: 100%;
 }

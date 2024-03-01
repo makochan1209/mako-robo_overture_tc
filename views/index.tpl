@@ -6,6 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link href = "/static/index.css" rel = "stylesheet">
     <title>Overture - mako-robo Manager</title>
+    <meta name="viewport" content="width = device-width, initial-scale = 1, shrink-to-fit = no">
 </head>
 <body>
     <div id = "all-wrapper">

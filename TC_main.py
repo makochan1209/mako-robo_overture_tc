@@ -446,7 +446,7 @@ def index():
 
 @route('/update')
 def ajax_update():
-    dt = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    dt = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
     dict = {
         'dt': dt,
         'serial': use_port,
