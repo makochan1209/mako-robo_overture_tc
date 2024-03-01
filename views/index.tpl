@@ -5,62 +5,110 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link href = "/static/index.css" rel = "stylesheet">
-    <title>Overture by Team mako-robo 管理コンソール</title>
+    <title>Overture - mako-robo Manager</title>
 </head>
 <body>
     <div id = "all-wrapper">
-        <h2>Overture by Team mako-robo 管理コンソール</h2>
-        <div>
-            現在時刻：<span id = "time"></span>
-        </div>
-        <div>シリアルポート：<span id = "serial"></span></div>
-        <div id = "button-wrapper">
-            <button id = "btn-connect-serial" onclick = "connectSerial()">1: シリアルポートと接続</button>
-            <button id = "btn-connect" onclick = "connect()">2: ロボットと接続</button>
-            <button id = "btn-emg-stop" onclick = "emgStop()">3: 全ロボット緊急停止</button>
-            <button id = "btn-start" onclick = "start()">4: 競技開始</button>
-            <!--<button id = "btn-exit" onclick = "exitTC()">9: プログラム終了</button>-->
-            <button id = "btn-init" onclick = "initTC()">0: プログラムのリセット（動作不調時のみ、シリアルポートはリセットされない）</button>
-        </div>
-        <div id = "content-wrapper">
-            <div id = "robot-list-container">
-                % for i in range(ROBOT_NUM):
-                    <div class = "robot-container">
-                        <h3 class = "robot-no">{{i + 1}}号機</h3>
-                        <div class = "robot-twe-id">TWE-Lite アドレス：<span></span></div>
-                        <div class = "robot-pos" style = "display: none;">現在地：<span></span></div>
-                        <div class = "robot-dest-pos" style = "display: none;">目的地：<span></span></div>
-                        <div class = "robot-act">現在の行動：<span></span></div>
-                        <div class = "robot-ball">ボール状況：赤<span class = "r"></span>個、黄<span class = "y"></span>個、青<span class = "b"></span>個</div>
-                        <div class = "robot-request">現在の許可要求：<span></span></div>
-                        <div class = "robot-act" style = "display: none;">現在の許可要求の目的地：<span></span></div>
-                        <div class = "robot-permit">直近の許可内容：<span></span></div>
+        <header>
+            <div class = "wrapper">
+                <div class = "mrma-icon">mako-robo<div>Manager</div></div>
+                <div id = "time"></div>
+            </div>
+        </header>
+        <div id = "info-bar">
+            <div class = "wrapper">
+                <div id = "info-bar-img">
+                    <img src = "/static/overture.png">
+                </div>
+                <div id = "info-bar-telemetry">
+                    <div id = "info-bar-telemetry-upper">
+                        <h1>Overture</h1>
+                        <div id = "info-bar-status" class = "running">RUNNING</div>
+                        <div class = "info-bar-telemetry-box">
+                            <div class = "title">Port</div>
+                            <div class = "value"><span id = "serial" class = "value"></span></div>
+                        </div>
+                        <div class = "info-bar-telemetry-box small-margin-right">
+                            <div class = "title">Total Point</div>
+                            <div class = "value"><span id = "total-point-value" class = "value">44</span><span class = "smaller-value"> / 50</span></div>
+                        </div>
+                        <div class = "info-bar-telemetry-box">
+                            <ul class = "total-point-detail-list">
+                                <li class = "ball-point-elem red-ball-point-elem" id = "total-red">5</li>
+                                <li class = "ball-point-elem yellow-ball-point-elem" id = "total-yellow">4</li>
+                            </ul>
+                            <ul class = "total-point-detail-list">
+                                <li class = "ball-point-elem blue-ball-point-elem" id = "total-blue">4</li>
+                                <li class = "ball-point-elem tennis-ball-point-elem" id = "total-tennis">1</li>
+                            </ul>
+                        </div>
                     </div>
-                % end
+                    <div id = "info-bar-telemetry-lower">
+                        <div id = "robot-list-container">
+                            % for i in range(ROBOT_NUM):
+                                <div class = "robot-container">
+                                    <h4>Robot %i% <span class = "twe-lite-address"></span></h4>
+                                    <div class = "robot-info-box">
+                                        <div class = "robot-info-status">
+                                            <span class = "value">SEARCHING</span><span class = "smaller-value"></span>
+                                        </div>
+                                        <ul class = "robot-ball-status">
+                                            <li class = "ball-point-elem red-ball-point-elem" id = "total-red">5</li>
+                                            <li class = "ball-point-elem yellow-ball-point-elem" id = "total-yellow">4</li>
+                                            <li class = "ball-point-elem blue-ball-point-elem" id = "total-blue">4</li>
+                                        </div>
+                                    </div>
+                                </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id = "main-page">
+            <div class = "wrapper">
+                <div id = "robot-stage-container">
+                    <div id = "robot-stage">
+                        <img src = "/static/stage.webp">
+                        <div id = "map-pos00" class = "map-pos"></div>
+                        <div id = "map-pos01" class = "map-pos"></div>
+                        <div id = "map-pos02" class = "map-pos"></div>
+                        <div id = "map-pos03" class = "map-pos"></div>
+                        <div id = "map-pos04" class = "map-pos"></div>
+                        <div id = "map-pos05" class = "map-pos"></div>
+                        <div id = "map-pos06" class = "map-pos"></div>
+                        <div id = "map-pos07" class = "map-pos"></div>
+                        <div id = "map-pos08" class = "map-pos"></div>
+                        <div id = "map-pos09" class = "map-pos"></div>
+                    </div>
+                    <ul id = "legend">
+                        <li><span class = "icon-pos">①②</span>：現在地</li>
+                        <li><span class = "icon-dest-pos">①②</span>：許可目的地</li>
+                        <li><span class = "icon-final-dest-pos">①②</span>：最終目的地</li>
+                    </ul>
+                </div>
+                
+                <div id = "main-content-container">
+                    <div id = "notice-container">
+                        <h2>Notice</h2>
+                        <p id = "notice">
+                            TWE-Lite（親機）が接続されていません。<br>
+                            「シリアルポートに接続」を押して接続してください。
+                        </p>
+                    </div>
+                    <div id = "control-container">
+                        <h2>Control</h2>
+                        <div id = "button-wrapper">
+                            <button id = "btn-connect-serial" onclick = "connectSerial()">シリアルポートと接続</button>
+                            <button id = "btn-connect" onclick = "connect()">ロボットと接続</button>
+                            <button id = "btn-emg-stop" onclick = "emgStop()">ロボット緊急停止</button>
+                            <button id = "btn-start" onclick = "start()">競技開始</button>
+                            <button id = "btn-init" onclick = "initTC()">リセット（動作不調時のみ）</button>
+                        </div>
+                    </div>
                     <div id = "terminal-container">
-                        <h2>標準出力</h2>
+                        <h2>Output</h2>
                         <textarea id = "terminal" cols="80" rows="8"></textarea>
                     </div>
-            </div>
-            <div id = "robot-stage-container">
-                <div id = "robot-stage">
-                    <img src = "/static/stage.webp">
-                    <div id = "map-pos00" class = "map-pos"></div>
-                    <div id = "map-pos01" class = "map-pos"></div>
-                    <div id = "map-pos02" class = "map-pos"></div>
-                    <div id = "map-pos03" class = "map-pos"></div>
-                    <div id = "map-pos04" class = "map-pos"></div>
-                    <div id = "map-pos05" class = "map-pos"></div>
-                    <div id = "map-pos06" class = "map-pos"></div>
-                    <div id = "map-pos07" class = "map-pos"></div>
-                    <div id = "map-pos08" class = "map-pos"></div>
-                    <div id = "map-pos09" class = "map-pos"></div>
                 </div>
-                <ul id = "legend">
-                    <li><span class = "icon-pos">①②</span>：現在地</li>
-                    <li><span class = "icon-dest-pos">①②</span>：許可目的地</li>
-                    <li><span class = "icon-final-dest-pos">①②</span>：最終目的地</li>
-                </ul>
             </div>
         </div>
     </div>
