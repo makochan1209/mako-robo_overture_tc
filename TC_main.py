@@ -442,7 +442,7 @@ def server_static(filename):
 
 @route('/')
 def index():
-    return template('tc', ROBOT_NUM = ROBOT_NUM)
+    return template('index', ROBOT_NUM = ROBOT_NUM)
 
 @route('/update')
 def ajax_update():
