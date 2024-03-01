@@ -285,8 +285,10 @@
             };
         }
 
-        updateDOM();
-        setInterval(updateDOM, 250);
+        window.addEventListener("load", (event) => {
+            updateDOM();
+            setInterval(updateDOM, 250);
+        });
     </script>
 </body>
 </html>
