@@ -31,6 +31,7 @@
     --font-color: #2A2A2A;
     --dark-bg-color: #2A2A2A;
     --gray-bg-color: #858585;
+    --gray-border-color: #707070;
     --h2-border: #CECECE;
     --theme-bg-color: #2C7531;
     --red: #D63B3B;
@@ -315,24 +316,27 @@ div.info-bar-telemetry-box.total-point-detail-box {
 }
 
 #main-page h2 {
+    padding-top: 1rem;
     margin: 0;
     font-weight: 500;
     font-size: 25px;
     border-bottom: 1px solid var(--h2-border);
+    margin-bottom: 1rem;
 }
 
 #robot-stage-container {
     display: flex;
     flex-direction: column;
+    width: 600px;
 }
 
 #robot-stage {
     position: relative;
-    height: 100%;
+    width: 100%;
 }
 
 #robot-stage img {
-    height: 100%;
+    width: 100%;
     object-fit: contain;
 }
 
@@ -421,12 +425,25 @@ span.icon-final-dest-pos {
 
 #main-content-container {
     flex: 1;
+    padding-left: 2rem;
+}
+
+#notice {
+    line-height: 2.2rem;
 }
 
 button {
+    display: block;
     font-size: 1rem;
-    padding: 1rem 0.5rem;
+    width: 315px;
+    height: 50px;
     margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+    border: 1px solid var(--gray-border-color);
+    color: var(--gray-border-color);
+    border-radius: 12px;
+    background-color: transparent;
+    cursor: pointer;
 }
 
 #terminal-container {
