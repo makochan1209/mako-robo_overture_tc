@@ -264,6 +264,12 @@ div.info-bar-telemetry-box div.value {
     align-items: baseline;
 }
 
+#total-point-value {
+    width: 1.5rem;
+    font-variant: tabular-nums;
+    font-feature-settings: "tnum";
+}
+
 div.info-bar-telemetry-box div.value > span {
     display: inline-block;
     line-height: 30px;
