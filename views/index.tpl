@@ -219,39 +219,52 @@
                 const dt = dict["dt"].split(' ');
                 const serial = dict["serial"];
                 const robot = dict["robot"];
+
+                // TWE-Lite接続数
+                let tweCount = 0;
+                for (let i = 0; robot["tweAddr"].length; i++) {
+                    if (robot["tweAddr"] != 0xff) {
+                        tweCount++;
+                    }
+                }
                 
+                // 時刻
                 const dtArray = [dt[0].split('/'), dt[1].split(':')];
                 const dtSpanElements = document.getElementById("time").getElementsByTagName("span");
                 for (let i = 0; i < 6; i++) {
                     dtSpanElements[i].innerHTML = dtArray[Math.floor(i / 3)][i % 3];
                 }
                 
+                // 全体の情報
                 document.getElementById("serial").innerText = (serial != null ? serial : "未接続")
-
-                const btnConnectSerialElement = document.getElementById("btn-connect-serial");
-                const btnConnectElement = document.getElementById("btn-connect");
-                const btnEmgStopElement = document.getElementById("btn-emg-stop");
-                const btnStartElement = document.getElementById("btn-start");
-                const btnInitElement = document.getElementById("btn-init");
-                if (serial != null) {
-                    btnConnectSerialElement.style.display = 'none';
-                    btnConnectElement.style.display = 'block';
-                    btnEmgStopElement.style.display = 'block';
-                    btnStartElement.style.display = 'block';
+                
+                /*const infoBarStatusClass = ["inactive", "idle", "run"];
+                const infoBarStatusElement = document.getElementById("info-bar-status");
+                infoBarStatusClass.forEach((elem) => infoBarStatusElement.classList.remove(elem));
+                if (serial == null) {
+                    infoBarStatusElement.innerText = "INACTIVE";
+                    infoBarStatusElement.classList.add("inactive");
+                }
+                else if (tweCount == 0) {
+                    infoBarStatusElement.innerText = "OFFLINE";
+                    infoBarStatusElement.classList.add("inactive");
+                }
+                else if (tweCount > 0 && 1 == 1) {//競技中かどうか
+                    infoBarStatusElement.innerText = "IDLING";
+                    infoBarStatusElement.classList.add("idle");
                 }
                 else {
-                    btnConnectSerialElement.style.display = 'block';
-                    btnConnectElement.style.display = 'none';
-                    btnEmgStopElement.style.display = 'none';
-                    btnStartElement.style.display = 'none';
-                }
+                    infoBarStatusElement.innerText = "RUNNING";
+                    infoBarStatusElement.classList.add("run");
+                }*/
 
+                // マップ準備
                 const mapPosElementsList = [document.getElementById("map-pos00"), document.getElementById("map-pos01"), document.getElementById("map-pos02"), document.getElementById("map-pos03"), document.getElementById("map-pos04"), document.getElementById("map-pos05"), document.getElementById("map-pos06"), document.getElementById("map-pos07"), document.getElementById("map-pos08"), document.getElementById("map-pos09")];
                 for (let i = 0; i < mapPosElementsList.length; i++) {
                     mapPosElementsList[i].innerHTML = "";
                 }
 
-                // ロボットごとの情報
+                // ロボットごとの情報・マップ反映
                 for (let i = 0; i < dict["robot_num"]; i++) {
                     const robotContainer = document.getElementsByClassName("robot-container")[i];
 
@@ -330,6 +343,57 @@
                         mapPosElementsList[i].appendChild(spanElement);
                     }
                 }
+
+                // メッセージ
+                /*const noticeElement = document.getElementById("notice");
+                if (serial == none) {
+                    noticeElement.innerHTML = `
+                        TWE-Lite（親機）が接続されていません。<br>
+                        「シリアルポートに接続」を押して接続してください。
+                    `;
+                }
+                else if (tweCount == 0) {
+                    noticeElement.innerHTML = `
+                        ロボットが接続されていません。<br>
+                        「ロボットに接続」を押してください。
+                    `;
+                }
+                else {
+                    if (tweCount == 1) {
+                        noticeElement.innerHTML = `
+                            1台のロボットに接続されています。単独試技モードで走行可能です。<br>
+                            「出走前チェックリスト」を開いて、出走前チェックを行ってください。 / チェックリスト完了。「競技開始」を押して出走してください。
+                        `;
+                    }
+                    else if (tweCount == 2) {
+                        noticeElement.innerHTML = `
+                            2台のロボットに接続されています。協調試技モードで走行可能です。<br>
+                            「出走前チェックリスト」を開いて、出走前チェックを行ってください。 / チェックリスト完了。「競技開始」を押して出走してください。
+                        `;
+                    }
+                }*/
+                
+
+                // ボタン
+                const btnConnectSerialElement = document.getElementById("btn-connect-serial");
+                const btnConnectElement = document.getElementById("btn-connect");
+                const btnEmgStopElement = document.getElementById("btn-emg-stop");
+                const btnStartElement = document.getElementById("btn-start");
+                const btnInitElement = document.getElementById("btn-init");
+                if (serial != null) {
+                    btnConnectSerialElement.style.display = 'none';
+                    btnConnectElement.style.display = 'block';
+                    btnEmgStopElement.style.display = 'block';
+                    btnStartElement.style.display = 'block';
+                }
+                else {
+                    btnConnectSerialElement.style.display = 'block';
+                    btnConnectElement.style.display = 'none';
+                    btnEmgStopElement.style.display = 'none';
+                    btnStartElement.style.display = 'none';
+                }
+
+                // 出力
                 terminalElement = document.getElementById("terminal")
                 for (i = 0; i < robot["terminal"].length; i++) {
                     terminalElement.value += (robot["terminal"][i] + "\n")
