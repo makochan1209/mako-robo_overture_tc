@@ -222,7 +222,7 @@
 
                 // TWE-Lite接続数
                 let tweCount = 0;
-                for (let i = 0; robot["tweAddr"].length; i++) {
+                for (let i = 0; i < robot["tweAddr"].length; i++) {
                     if (robot["tweAddr"] != 0xff) {
                         tweCount++;
                     }
@@ -238,7 +238,7 @@
                 // 全体の情報
                 document.getElementById("serial").innerText = (serial != null ? serial : "未接続")
                 
-                /*const infoBarStatusClass = ["inactive", "idle", "run"];
+                const infoBarStatusClass = ["inactive", "idle", "run"];
                 const infoBarStatusElement = document.getElementById("info-bar-status");
                 infoBarStatusClass.forEach((elem) => infoBarStatusElement.classList.remove(elem));
                 if (serial == null) {
@@ -256,7 +256,7 @@
                 else {
                     infoBarStatusElement.innerText = "RUNNING";
                     infoBarStatusElement.classList.add("run");
-                }*/
+                }
 
                 // マップ準備
                 const mapPosElementsList = [document.getElementById("map-pos00"), document.getElementById("map-pos01"), document.getElementById("map-pos02"), document.getElementById("map-pos03"), document.getElementById("map-pos04"), document.getElementById("map-pos05"), document.getElementById("map-pos06"), document.getElementById("map-pos07"), document.getElementById("map-pos08"), document.getElementById("map-pos09")];
@@ -345,7 +345,7 @@
                 }
 
                 // メッセージ
-                /*const noticeElement = document.getElementById("notice");
+                const noticeElement = document.getElementById("notice");
                 if (serial == none) {
                     noticeElement.innerHTML = `
                         TWE-Lite（親機）が接続されていません。<br>
@@ -371,7 +371,7 @@
                             「出走前チェックリスト」を開いて、出走前チェックを行ってください。 / チェックリスト完了。「競技開始」を押して出走してください。
                         `;
                     }
-                }*/
+                }
                 
 
                 // ボタン
