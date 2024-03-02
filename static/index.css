@@ -275,8 +275,11 @@ div.info-bar-telemetry-box div.value > span {
     line-height: 30px;
 }
 
-div.info-bar-telemetry-box div.value > span.smaller-value {
+div.info-bar-telemetry-box div.value > span.smaller-value, div.robot-info-box span.smaller-value {
     font-size: 15px;
+}
+
+div.info-bar-telemetry-box div.value > span.smaller-value {
     line-height: 20px;
     margin-left: 0.5rem;
 }
@@ -315,6 +318,21 @@ div.info-bar-telemetry-box.total-point-detail-box {
 
 #robot-list-container div.robot-container div.robot-info-box > * {
     margin: 0.1rem 0;
+}
+
+div.robot-info-box span.smaller-value {
+    margin-left: 0.25rem;
+    visibility: visible;
+    opacity: 1;
+    transition: all 0.5s;
+    max-width: 5rem;
+}
+
+div.robot-info-box span.smaller-value.d-none {
+    margin-left: 0;
+    visibility: collapse;
+    opacity: 0;
+    max-width: 0;
 }
 
 #main-page > div {

@@ -251,12 +251,14 @@
                     mapPosElementsList[i].innerHTML = "";
                 }
 
+                // ロボットごとの情報
                 for (let i = 0; i < dict["robot_num"]; i++) {
                     const robotContainer = document.getElementsByClassName("robot-container")[i];
 
                     robotContainer.getElementsByClassName("robot-twe-id")[0].innerText = (robot["tweAddr"][i] != 0xff ? ("(TWE-Lite: " + ("0x" + robot["tweAddr"][i].toString(16)) + ")") : "");
                     robotInfoStatusElement = robotContainer.getElementsByClassName("robot-info-status")[0];
                     robotInfoStatusValueElement = robotInfoStatusElement.getElementsByClassName("value")[0];
+                    robotInfoStatusSmallerValueElement = robotInfoStatusElement.getElementsByClassName("smaller-value")[0];
 
                     if (robot["tweAddr"][i] == 0xff) {
                         robotInfoStatusValueElement.innerText = "NOT CONNECTED";
@@ -271,11 +273,11 @@
                             break;
                             case 0x02:
                             case 0x03:
-                            robotInfoStatusValueElement.innerText = "SEARCHING 1";
+                            robotInfoStatusValueElement.innerText = "SEARCHING";
                             break;
                             case 0x04:
                             case 0x05:
-                            robotInfoStatusValueElement.innerText = "SEARCHING 2";
+                            robotInfoStatusValueElement.innerText = "APPROACH";
                             break;
                             case 0x06:
                             robotInfoStatusValueElement.innerText = "CATCHING";
@@ -286,9 +288,27 @@
                         }
                     }
 
-                    robotContainer.getElementsByClassName("red-ball-status")[0].innerText = robot["ballStatus"][i]["r"];
-                    robotContainer.getElementsByClassName("yellow-ball-status")[0].innerText = robot["ballStatus"][i]["y"];
-                    robotContainer.getElementsByClassName("blue-ball-status")[0].innerText = robot["ballStatus"][i]["b"];
+                    if ((robot["act"][i] <= 0x01 && robot["act"][i] >= 0x06) || robot["tweAddr"][i] == 0xff) {
+                        robotInfoStatusSmallerValueElement.classList.add("d-none");
+                        robotInfoStatusSmallerValueElement.innerText = "";
+                    }
+                    else {
+                        robotInfoStatusSmallerValueElement.innerText = "(" + "-" + " / " + "-" + ")";
+                        robotInfoStatusSmallerValueElement.classList.remove("d-none");
+                    }
+
+                    robotBallStatusElement = robotContainer.getElementsByClassName("robot-ball-status")[0];
+
+                    if (robot["ballStatus"][i]["r"] + robot["ballStatus"][i]["y"] + robot["ballStatus"][i]["b"] == 0) {
+                        robotBallStatusElement.classList.add("d-none");
+                    }
+                    else {
+                        robotBallStatusElement.classList.remove("d-none");
+                    }
+
+                    robotBallStatusElement.getElementsByClassName("red-ball-status")[0].innerText = robot["ballStatus"][i]["r"];
+                    robotBallStatusElement.getElementsByClassName("yellow-ball-status")[0].innerText = robot["ballStatus"][i]["y"];
+                    robotBallStatusElement.getElementsByClassName("blue-ball-status")[0].innerText = robot["ballStatus"][i]["b"];
 
                     const numString = numStringConv(i + 1);
                     if (robot["pos"][i] <= 0x09) {
