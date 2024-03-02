@@ -7,13 +7,14 @@
     <link href = "/static/index.css" rel = "stylesheet">
     <title>Overture - mako-robo Manager</title>
     <meta name="viewport" content="width = device-width, initial-scale = 1, shrink-to-fit = no">
+    <link rel="stylesheet" href="/static/odometer-theme-minimal.css">
 </head>
 <body>
     <div id = "all-wrapper">
         <header>
             <div class = "wrapper">
                 <div class = "mrma-icon"><div>mako-robo</div><div>Manager</div></div>
-                <div id = "time"></div>
+                <div id = "time"><span></span>/<span></span>/<span></span> <span></span>:<span></span>:<span></span></div>
             </div>
         </header>
         <div id = "info-bar">
@@ -48,15 +49,15 @@
                         <div id = "robot-list-container">
                             % for i in range(ROBOT_NUM):
                                 <div class = "robot-container">
-                                    <h4>Robot {{i + 1}} <span class = "twe-lite-address"></span></h4>
+                                    <h4>Robot {{i + 1}} <span class = "robot-twe-id"></span></h4>
                                     <div class = "robot-info-box">
                                         <div class = "robot-info-status">
-                                            <span class = "value">SEARCHING</span><span class = "smaller-value"></span>
+                                            <span class = "value">SEARCHING</span><span class = "smaller-value">(5 / 5)</span>
                                         </div>
-                                        <ul class = "robot-ball-status {{"d-none" if i == 1 else ""}}">
-                                            <li class = "ball-point-elem red-ball-point-elem" id = "total-red">5</li>
-                                            <li class = "ball-point-elem yellow-ball-point-elem" id = "total-yellow">4</li>
-                                            <li class = "ball-point-elem blue-ball-point-elem" id = "total-blue">4</li>
+                                        <ul class = "robot-ball-status">
+                                            <li class = "red-ball-status ball-point-elem red-ball-point-elem">1</li>
+                                            <li class = "yellow-ball-status ball-point-elem yellow-ball-point-elem">1</li>
+                                            <li class = "blue-ball-status ball-point-elem blue-ball-point-elem">2</li>
                                         </ul>
                                     </div>
                                 </div>
@@ -116,6 +117,7 @@
         </div>
     </div>
 
+    <script src="/static/odometer.js"></script>
     <script type="text/javascript">
         function numStringConv(i) {
             switch(i) {
@@ -214,10 +216,16 @@
             xhr.onload = function () {
                 const dict = JSON.parse(xhr.responseText);
                 // 以下、Javascriptで料理する
-                const dt = dict["dt"];
+                const dt = dict["dt"].split(' ');
                 const serial = dict["serial"];
                 const robot = dict["robot"];
-                document.getElementById("time").innerText = dt
+                
+                const dtArray = [dt[0].split('/'), dt[1].split(':')];
+                const dtSpanElements = document.getElementById("time").getElementsByTagName("span");
+                for (let i = 0; i < 6; i++) {
+                    dtSpanElements[i].innerHTML = dtArray[Math.floor(i / 3)][i % 3];
+                }
+                
                 document.getElementById("serial").innerText = (serial != null ? serial : "未接続")
 
                 const btnConnectSerialElement = document.getElementById("btn-connect-serial");
@@ -246,16 +254,41 @@
                 for (let i = 0; i < dict["robot_num"]; i++) {
                     const robotContainer = document.getElementsByClassName("robot-container")[i];
 
-                    robotContainer.getElementsByClassName("robot-twe-id")[0].getElementsByTagName("span")[0].innerText = (robot["tweAddr"][i] != 0xff ? ("0x" + robot["tweAddr"][i].toString(16)) : "未接続");
-                    robotContainer.getElementsByClassName("robot-pos")[0].getElementsByTagName("span")[0].innerText = ("0x" + robot["pos"][i].toString(16));
-                    robotContainer.getElementsByClassName("robot-dest-pos")[0].getElementsByTagName("span")[0].innerText = ("0x" + robot["destPos"][i].toString(16));
-                    robotContainer.getElementsByClassName("robot-act")[0].getElementsByTagName("span")[0].innerText = ((robot["act"][i] != 0xff ? robot["actText"][robot["act"][i]] : "なし") + "（0x" + robot["act"][i].toString(16) + "）");
-                    robotContainer.getElementsByClassName("robot-ball")[0].getElementsByClassName("r")[0].innerText = robot["ballStatus"][i]["r"];
-                    robotContainer.getElementsByClassName("robot-ball")[0].getElementsByClassName("y")[0].innerText = robot["ballStatus"][i]["y"];
-                    robotContainer.getElementsByClassName("robot-ball")[0].getElementsByClassName("b")[0].innerText = robot["ballStatus"][i]["b"];
-                    robotContainer.getElementsByClassName("robot-request")[0].getElementsByTagName("span")[0].innerText = ((robot["request"][i] != 0xff ? robot["requestText"][robot["request"][i]] : "なし") + "（0x" + robot["request"][i].toString(16) + "）");
-                    // robotContainer.getElementsByClassName("robot-request-dest")[0].getElementsByTagName("span")[0].innerText = ("0x" + robot["requestDestPos"][i].toString(16) + "）");
-                    robotContainer.getElementsByClassName("robot-permit")[0].getElementsByTagName("span")[0].innerText = ((robot["permit"][i] != 0xff ? robot["permitText"][robot["permit"][i]] : "なし") + "（0x" + robot["permit"][i].toString(16) + "）");
+                    robotContainer.getElementsByClassName("robot-twe-id")[0].innerText = (robot["tweAddr"][i] != 0xff ? ("(TWE-Lite: " + ("0x" + robot["tweAddr"][i].toString(16)) + ")") : "");
+                    robotInfoStatusElement = robotContainer.getElementsByClassName("robot-info-status")[0];
+                    robotInfoStatusValueElement = robotInfoStatusElement.getElementsByClassName("value")[0];
+
+                    if (robot["tweAddr"][i] == 0xff) {
+                        robotInfoStatusValueElement.innerText = "NOT CONNECTED";
+                    }
+                    else {
+                        switch (robot["act"][i]) {
+                            case 0x00:
+                            robotInfoStatusValueElement.innerText = "WAITING";
+                            break;
+                            case 0x01:
+                            robotInfoStatusValueElement.innerText = "MOVING";
+                            break;
+                            case 0x02:
+                            case 0x03:
+                            robotInfoStatusValueElement.innerText = "SEARCHING 1";
+                            break;
+                            case 0x04:
+                            case 0x05:
+                            robotInfoStatusValueElement.innerText = "SEARCHING 2";
+                            break;
+                            case 0x06:
+                            robotInfoStatusValueElement.innerText = "CATCHING";
+                            break;
+                            case 0x07:
+                            robotInfoStatusValueElement.innerText = "SHOOTING";
+                            break;
+                        }
+                    }
+
+                    robotContainer.getElementsByClassName("red-ball-status")[0].innerText = robot["ballStatus"][i]["r"];
+                    robotContainer.getElementsByClassName("yellow-ball-status")[0].innerText = robot["ballStatus"][i]["y"];
+                    robotContainer.getElementsByClassName("blue-ball-status")[0].innerText = robot["ballStatus"][i]["b"];
 
                     const numString = numStringConv(i + 1);
                     if (robot["pos"][i] <= 0x09) {
