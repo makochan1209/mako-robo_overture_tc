@@ -346,7 +346,7 @@
 
                 // メッセージ
                 const noticeElement = document.getElementById("notice");
-                if (serial == none) {
+                if (serial == null) {
                     noticeElement.innerHTML = `
                         TWE-Lite（親機）が接続されていません。<br>
                         「シリアルポートに接続」を押して接続してください。
