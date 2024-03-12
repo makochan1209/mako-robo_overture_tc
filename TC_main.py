@@ -460,9 +460,6 @@ def ajax_update():
             'requestDestPos': requestDestPos,
             'permit': permit,
             'ballStatus': ballStatus,
-            'actText': actText,
-            'requestText': requestText,
-            'permitText': permitText,
             'tweAddr': tweAddr,
             'terminal': terminalOutputBuff.copy()
         }
