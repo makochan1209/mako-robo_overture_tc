@@ -30,6 +30,8 @@ permit = [] # ロボットの直近許可内容
 ballStatus = [] # ボール取得個数、ロボットごとの配列で、その中の各値は連想配列（r, g, b）で管理
 searchNum = []  # 探索回数
 terminalOutputBuff = [] # 出力テキスト
+totalBalls = {"r": 0, "y": 0, "b": 0}  # 各色のボールの総数
+testData = []   # 測定テストデータ（未実装）
 
 actText = ["待機中", "走行中", "ボール探索中（未発見、LiDARなし）", "ボール探索中（未発見、LiDARあり）", "ボール探索中（発見済、LiDARなし）", "ボール探索中（発見済、LiDARあり）", "ボールキャッチ", "ボールシュート"]
 requestText = ["", "移動許可要求", "", "ボール探索（未発見）LiDAR照射許可要求", "", "ボール探索（発見済）LiDAR照射許可要求", "ボールキャッチ許可要求", "ボールシュート許可要求"]
@@ -352,6 +354,16 @@ def TCDaemon():
                     elif act[fromID] == 0x01:
                         pos[fromID] = tweResult.data[1]
                         terminalPrint("現在地: " + hex(pos[fromID]))
+                    elif act[fromID] == 0x07:
+                        if tweResult.data[1] == 0x00:
+                            totalBalls["r"] += ballStatus[fromID]["r"]
+                            ballStatus[fromID]["r"] = 0
+                        elif tweResult.data[1] == 0x01:
+                            totalBalls["y"] += ballStatus[fromID]["y"]
+                            ballStatus[fromID]["y"] = 0
+                        elif tweResult.data[1] == 0x02:
+                            totalBalls["b"] += ballStatus[fromID]["b"]
+                            ballStatus[fromID]["b"] = 0
 
                 elif tweResult.command == 0x20: # 許可要求。ここで管制や許可を行う、管制処理はすべてここ。
                     requestQueue.append(fromID)
@@ -370,6 +382,7 @@ def TCDaemon():
 
 # ボタン操作からの管制への反映
 def compStart():
+    global totalBalls
     connectedNum = 0    # 接続済機体数のカウント
     for i in range(ROBOT_NUM):
         if tweAddr[i] != 0xff:
@@ -378,6 +391,7 @@ def compStart():
     global pauseTC
     pauseTC = True
     terminalPrint("start")
+    totalBalls = {"r": 0, "y": 0, "b": 0}
     twe.sendTWE(tweAddr[0], 0x71, [0x00, 0x00 if connectedNum == 2 else 0x01]) # 2台ともに競技開始を通知、2台の場合は協調モード、1台の場合は単独モード
     pauseTC = False
 
@@ -461,7 +475,9 @@ def ajax_update():
             'permit': permit,
             'ballStatus': ballStatus,
             'tweAddr': tweAddr,
-            'terminal': terminalOutputBuff.copy()
+            'terminal': terminalOutputBuff.copy(),
+            'totalBalls': totalBalls,
+            'testData': testData
         }
     }
     terminalOutputBuff.clear()
