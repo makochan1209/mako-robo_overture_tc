@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -249,7 +249,7 @@
                     infoBarStatusElement.innerText = "OFFLINE";
                     infoBarStatusElement.classList.add("inactive");
                 }
-                else if (tweCount > 0 && 1 == 1) {//競技中かどうか
+                else if (tweCount > 0 && dict["tcStatus"] == 0) {   //競技中かどうか
                     infoBarStatusElement.innerText = "IDLING";
                     infoBarStatusElement.classList.add("idle");
                 }
@@ -257,6 +257,15 @@
                     infoBarStatusElement.innerText = "RUNNING";
                     infoBarStatusElement.classList.add("run");
                 }
+
+                // 全体の得点表示
+                const totalBalls = robot["totalBalls"];
+                document.getElementById("total-red").innerText = totalBalls["r"];
+                document.getElementById("total-yellow").innerText = totalBalls["y"];
+                document.getElementById("total-blue").innerText = totalBalls["b"];
+                document.getElementById("total-tennis").innerText = totalBalls["t"];
+                
+                document.getElementById("total-point-value").innerText = (totalBalls["r"] + totalBalls["y"] + totalBalls["b"]) * 3 + totalBalls["t"] * 5;
 
                 // マップ準備
                 const mapPosElementsList = [document.getElementById("map-pos00"), document.getElementById("map-pos01"), document.getElementById("map-pos02"), document.getElementById("map-pos03"), document.getElementById("map-pos04"), document.getElementById("map-pos05"), document.getElementById("map-pos06"), document.getElementById("map-pos07"), document.getElementById("map-pos08"), document.getElementById("map-pos09")];
@@ -395,8 +404,8 @@
 
                 // 出力
                 terminalElement = document.getElementById("terminal")
-                for (i = 0; i < robot["terminal"].length; i++) {
-                    terminalElement.value += (robot["terminal"][i] + "\n")
+                for (i = 0; i < dict["terminal"].length; i++) {
+                    terminalElement.value += (dict["terminal"][i] + "\n")
                 }
                 terminalElement.scrollTop = terminalElement.scrollHeight;
             };

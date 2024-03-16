@@ -19,6 +19,7 @@ ROBOT_NUM = 2    # ロボットの台数（1台から6台に対応、2台と6台
 
 tweAddr = []  # 各機のTWELITEのアドレス（TWELITE交換に対応）、0xffは未接続
 
+tcStatus = 0    # 0: 待機中、1: 競技中
 pos = [] # ロボットの位置
 destPos = [] # ロボットの行き先
 finalDestPos = [] # ロボットの最終目的地
@@ -30,7 +31,7 @@ permit = [] # ロボットの直近許可内容
 ballStatus = [] # ボール取得個数、ロボットごとの配列で、その中の各値は連想配列（r, g, b）で管理
 searchNum = []  # 探索回数
 terminalOutputBuff = [] # 出力テキスト
-totalBalls = {"r": 0, "y": 0, "b": 0}  # 各色のボールの総数
+totalBalls = {"r": 0, "y": 0, "b": 0, "t": 0}  # 各色の得点済のボールの総数
 testData = []   # 測定テストデータ（未実装）
 
 actText = ["待機中", "走行中", "ボール探索中（未発見、LiDARなし）", "ボール探索中（未発見、LiDARあり）", "ボール探索中（発見済、LiDARなし）", "ボール探索中（発見済、LiDARあり）", "ボールキャッチ", "ボールシュート"]
@@ -364,6 +365,8 @@ def TCDaemon():
                         elif tweResult.data[1] == 0x02:
                             totalBalls["b"] += ballStatus[fromID]["b"]
                             ballStatus[fromID]["b"] = 0
+                        elif tweResult.data[1] == 0x03:
+                            totalBalls["t"] += 1
 
                 elif tweResult.command == 0x20: # 許可要求。ここで管制や許可を行う、管制処理はすべてここ。
                     requestQueue.append(fromID)
@@ -382,24 +385,25 @@ def TCDaemon():
 
 # ボタン操作からの管制への反映
 def compStart():
-    global totalBalls
     connectedNum = 0    # 接続済機体数のカウント
     for i in range(ROBOT_NUM):
         if tweAddr[i] != 0xff:
             connectedNum += 1
 
-    global pauseTC
+    global pauseTC, totalBalls, tcStatus
     pauseTC = True
     terminalPrint("start")
-    totalBalls = {"r": 0, "y": 0, "b": 0}
+    totalBalls = {"r": 0, "y": 0, "b": 0, "t": 0}
+    tcStatus = 1
     twe.sendTWE(tweAddr[0], 0x71, [0x00, 0x00 if connectedNum == 2 else 0x01]) # 2台ともに競技開始を通知、2台の場合は協調モード、1台の場合は単独モード
     pauseTC = False
 
 def compEmgStop():
-    global pauseTC
+    global pauseTC, tcStatus
     pauseTC = True
     terminalPrint("emgStop")
     twe.sendTWE(tweAddr[0], 0x71, [0xff])
+    tcStatus = 0
     pauseTC = False
 
 # ロボット本体との接続
@@ -465,6 +469,8 @@ def ajax_update():
         'dt': dt,
         'serial': use_port,
         'robot_num': ROBOT_NUM,
+        'tcStatus': tcStatus,
+        'terminal': terminalOutputBuff.copy(),
         'robot': {
             'pos': pos,
             'destPos': destPos,
@@ -475,7 +481,6 @@ def ajax_update():
             'permit': permit,
             'ballStatus': ballStatus,
             'tweAddr': tweAddr,
-            'terminal': terminalOutputBuff.copy(),
             'totalBalls': totalBalls,
             'testData': testData
         }
